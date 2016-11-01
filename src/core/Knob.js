@@ -4,14 +4,14 @@ const QUEUE_MAX_SIZE = 4096;
 
 const defaultAudioCtx = Context.getOrCreateDefaultAudioContext();
 
-class Input {
+class Knob {
 	constructor(processFunc = function() {}, bufferSize = 0, initialValue = 0.0) {
 
 		this.data_ = null;
 		this.queue_ = [];
 		this.queueing = false;
 
-		const input = this;
+		const knob = this;
 		const scriptProcNode = this.scriptProcNode = defaultAudioCtx.createScriptProcessor(bufferSize, 1, 1);
 		this.scriptProcNode.onaudioprocess = (audioProcessingEvent) => {
 			const {inputBuffer, outputBuffer} = audioProcessingEvent;
@@ -19,13 +19,13 @@ class Input {
 			const inputData = inputBuffer.getChannelData(0);
 
 			// setup data path
-			input.data_ = inputData;
+			knob.data_ = inputData;
 
 			if (this.queueing) {
-				if (input.queue_.length >= QUEUE_MAX_SIZE) {
+				if (knob.queue_.length >= QUEUE_MAX_SIZE) {
 					throw new Error('Exceeded max queue size');
 				}
-				input.queue_.push(inputData);				
+				knob.queue_.push(inputData);				
 			}
 
 			processFunc(inputData, outputBuffer.getChannelData(0), Context.currentTime, sampleDuration);
@@ -82,4 +82,4 @@ class Input {
 	*/
 }
 
-export default Input;
+export default Knob;

@@ -1,33 +1,29 @@
-import Node from '../core/Node';
+import Nodule from '../core/Nodule';
 
 const DEFAULT_FREQ = 440;
 
-class Oscillator extends Node {
+class Oscillator extends Nodule {
 
 	constructor(frequency = DEFAULT_FREQ) {
 		super(0, 'Oscillator');
 		this.frequency = frequency;
 		this.resetTime = 0;
 
-		this.createInput('frequency');
+		this.createKnob('frequency');
 
-		this.createInput('oct');
-		this.createInput('fm');
-		this.createInput('phase');
-		this.createInput('reset');
+		this.createKnob('oct');
+		this.createKnob('fm');
+		this.createKnob('phase');
+		this.createKnob('reset');
 	}
 
-	tdtf(inputSample, time, inputsDataHash, inputBufferOffset) {
+	tdtf(sample, time, knobsDataHash, knobBufferOffset) {
 
-		if (!this.input('frequency').data) {
-			return 0;
-		}
-
-		const frequencyCVBuffer = inputsDataHash['frequency'];
+		const frequencyCVBuffer = knobsDataHash['frequency'];
 
 		let frequencyCV = 0;
 		if (frequencyCVBuffer) {
-			frequencyCV = frequencyCVBuffer[inputBufferOffset];
+			frequencyCV = frequencyCVBuffer[knobBufferOffset];
 			if (this.resetTime == 0) {
 				this.resetTime = time;
 				this.log('reset at: ' + time, true);

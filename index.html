@@ -13,7 +13,7 @@
 			function start() {
 				var fm = new modular.Oscillator(120);
 				var lfo = new modular.Oscillator(10);
-				modular.Node.patch(lfo, fm, 'frequency');
+				modular.Nodule.patch(lfo, fm, 'frequency');
 				modular.Context.patchToDevice(fm, 0.5);			
 			}
 

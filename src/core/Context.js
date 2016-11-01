@@ -2,8 +2,6 @@ let defaultAudioContext = null;
 let defaultAudioSourceNode = null;
 let guid = 0;
 
-import Input from './Input';
-
 class Context {
 	constructor() {
 		throw new Error('Context is not supposed to be constructed');

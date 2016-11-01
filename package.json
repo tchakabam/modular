@@ -1,0 +1,26 @@
+{
+  "name": "modular",
+  "version": "1.0.0",
+  "description": "Modular system",
+  "keywords": "WebAudio modular",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -Rf build && ./node_modules/.bin/webpack",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "./node_modules/.bin/webpack-dev-server"
+  },
+  "author": "Stephan Hesse <tchakabam@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-core": "^6.17.0",
+    "babel-loader": "^6.2.5",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-object-assign": "^6.8.0",
+    "babel-preset-es2015": "^6.16.0",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.16.2"
+  },
+  "dependencies": {
+    "es6-map": "0.1.4"
+  }
+}

@@ -15,23 +15,25 @@
 
 		<!--<div id="ui"></div>-->
 
+		<canvas width="960" height="100" id="canvas"></canvas>
+
 		<svg width="960" height="600" id="ui"></svg>
 
 		<script type="text/javascript">
 			
 			function start() {
-				var osc = new modular.Oscillator(120);
-				var osc2 = new modular.Oscillator(240);
-				var lfo = new modular.Oscillator(10);
-				lfo.name = 'lfo0';
-				var gain = new modular.Gain();
+				var osc = new modular.Oscillator(500);
+				//var osc2 = new modular.Oscillator(240);
+				var lfo = new modular.Oscillator(400);
+				//lfo.name = 'lfo0';
+				var gain = window.gain = new modular.Gain();
 
 				modular.Context.setUIElement('ui');
 
 				modular.Nodule.patch(lfo, osc, 'frequency');
 
 				modular.Nodule.patch(osc, gain);
-				modular.Nodule.patch(osc2, gain);
+				//modular.Nodule.patch(osc2, gain);
 
 				gain.knob('gain').value = 0.0;
 
@@ -39,7 +41,78 @@
 
 				modular.Context.refreshUI();
 
-				gain.knob('gain').value = 0.1;
+				gain.knob('gain').value = 1.0;
+			}
+
+			function testKnob() {
+
+				var c = document.getElementById("canvas");
+				var canvasCtx = c.getContext("2d");
+
+				var audioCtx = modular.Context.getOrCreateDefaultAudioContext();
+				var analyser = audioCtx.createAnalyser();
+
+				var knob = window.knob = new modular.Knob();
+
+				
+
+				// create Oscillator node
+				var oscillator = audioCtx.createOscillator();
+
+				oscillator.type = 'square';
+				oscillator.frequency.value = 3000; // value in hertz
+				oscillator.start();
+
+				oscillator.connect(audioCtx.destination);
+
+				knob.drive(oscillator.frequency);
+
+				knob.drive(analyser);
+
+				analyser.fftSize = 2048;
+				var bufferLength = analyser.fftSize;
+				var dataArray = new Uint8Array(bufferLength);
+				analyser.getByteTimeDomainData(dataArray);
+
+				var WIDTH = 960;
+				var HEIGHT = 100;
+
+				function draw() {
+
+				      drawVisual = requestAnimationFrame(draw);
+
+				      analyser.getByteTimeDomainData(dataArray);
+
+				      canvasCtx.fillStyle = 'rgb(200, 200, 200)';
+				      canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+
+				      canvasCtx.lineWidth = 2;
+				      canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
+
+				      canvasCtx.beginPath();
+
+				      var sliceWidth = WIDTH * 1.0 / bufferLength;
+				      var x = 0;
+
+				      for(var i = 0; i < bufferLength; i++) {
+				   
+				        var v = dataArray[i] / 128.0;
+				        var y = v * HEIGHT/2;
+
+				        if(i === 0) {
+				          canvasCtx.moveTo(x, y);
+				        } else {
+				          canvasCtx.lineTo(x, y);
+				        }
+
+				        x += sliceWidth;
+				      }
+
+				      canvasCtx.lineTo(canvas.width, canvas.height/2);
+				      canvasCtx.stroke();
+				    };
+
+				    draw();
 			}
 
 			/*

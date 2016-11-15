@@ -6,7 +6,7 @@ class Identity extends Nodule {
 		super(name || 'Identity');
 	}
 
-	tdtf(inSample/*, time, knobsDataHash, knobBufferOffset*/) {
+	tdtf(inSample) {
 		return inSample;
 	}
 }

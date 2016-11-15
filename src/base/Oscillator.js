@@ -11,8 +11,9 @@ class Oscillator extends Nodule {
 
 		this.createKnob('frequency');
 
+		//this.createKnob('oct');
 		/*
-		this.createKnob('oct');
+		
 		this.createKnob('fm');
 		this.createKnob('phase');
 		this.createKnob('reset');
@@ -26,14 +27,6 @@ class Oscillator extends Nodule {
 		let frequencyCV = 0;
 		if (frequencyCVBuffer) {
 			frequencyCV = frequencyCVBuffer[knobBufferOffset];
-			if (this.resetTime == 0) {
-				this.resetTime = time;
-				//this.log('reset at: ' + time, true);
-			}
-
-			//
-
-			//this.log(frequencyCV);
 		}
 
 		let freq = (this.frequency + frequencyCV * 10);

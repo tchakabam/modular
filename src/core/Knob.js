@@ -1,5 +1,4 @@
 import Context from './Context';
-import Knot from './Knot';
 
 const QUEUE_MAX_SIZE = 4096;
 
@@ -9,96 +8,59 @@ import SometimesDoer from '../util/SometimesDoer';
 const doer = new SometimesDoer(0.01);
 const ENABLE_LOG = true;
 
-class Knob extends Knot {
+class Knob {
 	constructor(processFunc = function() {}, bufferSize = 8192, initialValue = 0.0) {
-		super();
-
-		this.data_ = null;
-		this.queue_ = [];
-		this.queueing = false;
-		this.value_ = initialValue || null;
 		this.id_ = Context.newGuid();
 
-		const knob = this;
-		const scriptProcNode = this.scriptProcNode = defaultAudioCtx.createScriptProcessor(bufferSize, 1, 1);
-		scriptProcNode.onaudioprocess = (audioProcessingEvent) => {
-			const {inputBuffer, outputBuffer} = audioProcessingEvent;
-			const sampleDuration = inputBuffer.duration / inputBuffer.length;
-			const inputData = inputBuffer.getChannelData(0);
-			const outputData = outputBuffer.getChannelData(0);
+		const gain = defaultAudioCtx.createGain();
+		const buffer = defaultAudioCtx.createBuffer(1, 128, defaultAudioCtx.sampleRate);
+		const arr = buffer.getChannelData(0);
+		for (let i = 0; i < arr.length; i++){
+			arr[i] = 1;
+		}
+		const bufferSource = defaultAudioCtx.createBufferSource();
+		bufferSource.channelCount = 1;
+		bufferSource.channelCountMode = "explicit";
+		bufferSource.buffer = buffer;
+		bufferSource.loop = true;
+		bufferSource.start(0);
+		//bufferSource.noGC();
+		bufferSource.connect(gain);
 
-			// setup data path
+		this._gainNode = gain;
+	}
 
-			if (knob.locked) {
-				for (let i = 0; i < outputData.length; i++) {
-					outputData[i] = this.value;
-				}
-				
-			} else {
-				for (let i = 0; i < outputData.length; i++) {
-					outputData[i] = inputData[i];
-				}
-				processFunc(inputData, outputData, Context.currentTime, sampleDuration);
-			}
+	/* let this Knob drive something (any AudioNode's input) */
+	drive(audioNode, input = 0) {
 
-			knob.data_ = outputData;
-
-			if (this.queueing) {
-				if (knob.queue_.length >= QUEUE_MAX_SIZE) {
-					throw new Error('Exceeded max queue size');
-				}
-				knob.queue_.push(knob.data_);
-			}
+		// if it's an AudioParam kind off thing we first need set it back to zero
+		if (typeof audioNode.cancelScheduledValues === 'function') {
+			audioNode.cancelScheduledValues(Context.currentTime);
+			audioNode.value = 0.0;
 		}
 
-		/* TODO: implement event listeners on AudioNode
-		scriptProcNode.addEventListener('statechange', () => {
-
-		});
-		*/
-
-		Context.silentRouteAudioNode(scriptProcNode);
-	}
-
-	set queueing(q) {
-		this.queueing_ = q;
-	}
-
-	get queueing() {
-		return this.queueing_;
-	}
-
-	pop() {
-		if (!this.queue_.length) {
-			return null;
+		if (input === 0) {
+			// in case its just an AudioParam lets not mess with native signatures
+			return this._gainNode.connect(audioNode);
+		} else {
+			return this._gainNode.connect(audioNode, 0, input);
 		}
-		return this.queue_.shift();
 	}
 
-	get data() { return this.data_; }
+	get param() {
+		return this._gainNode.gain;
+	}
 
-	get audioNode() {
-		return this.scriptProcNode;
+	set value(v) {
+		this._gainNode.gain.value = v;
 	}
 
 	get value() {
-		return this.value_;
-	}
-
-	set value(value) {
-		this.value_ = value;
-	}
-
-	get locked() {
-		return this.value_ !== null;
+		return this._gainNode.gain.value;
 	}
 
 	get id() {
 		return this.id_;
-	}
-
-	unlock() {
-		this.value = null;
 	}
 
 	log(message, always) {

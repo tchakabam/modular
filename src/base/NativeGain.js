@@ -4,36 +4,26 @@ import Context from '../core/Context';
 const defaultAudioCtx = Context.getOrCreateDefaultAudioContext();
 
 class NativeGain extends Identity {
-	constructor(gain = null) {
+	constructor(gain = 1.0) {
 		super('NativeGain');
 
 		// insert GainNode
 		this.gainNode = defaultAudioCtx.createGain();
-		this.input.connect(this.gainNode);
 
 		// connect to param
-		this.createKnob('gain').connect(this.gainNode.gain);
+		this.createKnob('gain').drive(this.gainNode.gain);
 
-		this.knob('gain').value = gain;
+		this.knob('gain').value = 1.0;
 	}
 
-	
 	tick(inSample, time, knobsDataHash, knobBufferOffset) {
 
-		const paramDataBuffer = knobsDataHash['gain'];
+	}
 
-		if (!paramDataBuffer) {
-			return;
-		}
-
-		//this.log(paramDataBuffer[knobBufferOffset]);
-
-		if (paramDataBuffer) {
-			this.gainNode.gain.value = paramDataBuffer[knobBufferOffset];
-		}
+	get input() {
+		return this.gainNode;
 	}
 	
-
 	get output() {
 		return this.gainNode;
 	}

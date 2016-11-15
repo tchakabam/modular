@@ -1,6 +1,15 @@
+import Map from 'es6-map';
+
+import Graph from '../ui/Graph';
+
+const patches = [];
+const nodules = new Map();
+
 let defaultAudioContext = null;
 let defaultAudioSourceNode = null;
 let guid = 0;
+let uiElement = null;
+let graph = null;
 
 class Context {
 	constructor() {
@@ -27,21 +36,35 @@ class Context {
 		return guid++;
 	}
 
+	static silentRouteAudioNode(audioNode) {
+		const destination = Context.destination;
+		const gainNode = Context.getOrCreateDefaultAudioContext().createGain();
+		gainNode.gain.value = 0.0;
+		return audioNode
+			.connect(gainNode)
+			.connect(destination);	
+	}
+
 	/*
-	 * node can be AudioNode or Node
+	 * Can be AudioNode or Nodule
 	 */
-	static patchToDevice(node, gain = 1.0) {
-		let destination = Context.destination;
-		let audioNode = node.connect ? node : node.output;
+	static patchToDevice(nodule, gain = 1.0) {
+		const destination = Context.destination;
+		const audioNode = nodule.output;
+
+		Context.registerPatch(nodule, null, gain);
+
 		if (gain < 1.0) {
 			const gainNode = Context.getOrCreateDefaultAudioContext().createGain();
 			gainNode.gain.value = gain;
-			return audioNode
+			audioNode
 				.connect(gainNode)
-				.connect(Context.destination);
-		}
-		return audioNode
 				.connect(destination);
+		} else {
+			audioNode
+				.connect(destination);			
+		}
+		return nodule;
 	}
 
 	static getOrCreateDefaultAudioRateSource() {
@@ -68,6 +91,68 @@ class Context {
 		console.log('A-rate source started');
 
 		return defaultAudioSourceNode;
+	}
+
+	static registerPatch(from, to, gain) {
+		patches.push({
+			from,
+			to,
+			gain
+		});
+	}
+
+	static registerNodule(nodule) {
+		const name = nodule.name
+		if (nodules.has(name)) {
+			throw new Error('Nodule was already added to context: ' + name);
+		}
+		nodules.set(name, nodule);
+
+		return Context;
+	}
+
+	static setUIElement(elementOrId) {
+		if (uiElement) {
+			throw new Error('uiElement already set');
+		}
+
+		const type = typeof elementOrId;
+		switch (type) {
+		case 'string':
+			const el = document.getElementById(elementOrId);
+			if (!el) {
+				throw new Error('No such element: ' + elementOrId);
+			}
+			uiElement = el;
+			break;
+		case 'object':
+			uiElement = elementOrId;
+			break;
+		default:
+			throw new Error('Type of UI element can not be ' + type);
+		}
+
+		graph = new Graph(Context);
+	}
+
+	static unsetUIElement() {
+		uiElement = null;
+	}
+
+	static get uiElement() {
+		return uiElement;
+	}
+
+	static get nodules() {
+		return nodules;
+	}
+
+	static get patches() {
+		return patches;
+	}
+
+	static refreshUI() {
+		graph.refresh();
 	}
 }
 

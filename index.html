@@ -4,17 +4,42 @@
 
 		<script type="text/javascript" src="./modular.this.js"></script>
 
+		<link rel="stylesheet" href="style.css">
+
+		<style>
+
+		</style>
 	</head>
 
 	<body>
 
+		<!--<div id="ui"></div>-->
+
+		<svg width="960" height="600" id="ui"></svg>
+
 		<script type="text/javascript">
 			
 			function start() {
-				var fm = new modular.Oscillator(120);
+				var osc = new modular.Oscillator(120);
+				var osc2 = new modular.Oscillator(240);
 				var lfo = new modular.Oscillator(10);
-				modular.Nodule.patch(lfo, fm, 'frequency');
-				modular.Context.patchToDevice(fm, 0.5);			
+				lfo.name = 'lfo0';
+				var gain = new modular.Gain();
+
+				modular.Context.setUIElement('ui');
+
+				modular.Nodule.patch(lfo, osc, 'frequency');
+
+				modular.Nodule.patch(osc, gain);
+				modular.Nodule.patch(osc2, gain);
+
+				gain.knob('gain').value = 0.0;
+
+				modular.Context.patchToDevice(gain, 1.0);
+
+				modular.Context.refreshUI();
+
+				gain.knob('gain').value = 0.1;
 			}
 
 			/*

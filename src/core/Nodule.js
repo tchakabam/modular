@@ -4,22 +4,20 @@ import Knob from './Knob';
 import Context from './Context';
 
 import SometimesDoer from '../util/SometimesDoer';
-
 const doer = new SometimesDoer(0.001);
-
-const ENABLE_LOG = false;
+const ENABLE_LOG = true;
 
 class Nodule {
-	constructor(bufferSize = 0, name = null) {
-		this.defaultKnob = new Knob(this.process.bind(this));
+	constructor(name = null, bufferSize = 0) {
+		this.name_ = Nodule.tokenizeName(name);
+		this.signal_ = new Knob(this.process.bind(this));
 		this.knobs = new Map();
 		this.autoCreateKnobs = false;
 		if(!name) {
 			throw new Error('A base name must be provided');
 		}
-		name = Nodule.tokenizeName(name);
 
-		this.name_ = name;
+		Context.registerNodule(this);
 	}
 
 	set name(n) {
@@ -53,6 +51,13 @@ class Nodule {
 
 		// Iterate over buffers in the time-domain
 		for (let sample = 0; sample < inData.length; sample++) {
+			// first the tick function
+			this.tick(
+				inData[sample], 
+				time + (sample * sampleDuration), 
+				knobsDataHash, 
+			sample);
+			// now the dsp func
 			outData[sample] = this.tdtf(
 				inData[sample], 
 				time + (sample * sampleDuration), 
@@ -60,8 +65,14 @@ class Nodule {
 				sample
 			);
 		}
-		this.log('buffer length: ' + inData.length, true);
+		//this.log('buffer length: ' + inData.length, true);
 	}
+
+	/*
+	 * Called for each sample but has no return value.
+	 * Can be used to read out a-rate params and mutate state accordingly.
+	 */
+	tick(inSample, time, knobsDataHash, knobBufferOffset) {}
 
 	/*
 	 * Time-domain transfer function
@@ -78,7 +89,7 @@ class Nodule {
 		const newKnob = new Knob(procFunc, bufferSize, initialValue);
 		newKnob.queueing = true;
 		this.knobs.set(name, newKnob);
-		return this;
+		return newKnob;
 	}
 
 	hasKnob(name) {
@@ -95,9 +106,6 @@ class Nodule {
 	}
 
 	knob(name) {
-		if (!name) {
-			return this.defaultKnob;
-		}
 		if (!this.knobs.has(name)) {
 			if (this.autoCreateKnobs) {
 				this.createKnob(name);
@@ -109,32 +117,51 @@ class Nodule {
 		return this.knobs.get(name);
 	}
 
+	get input() {
+		return this.signal_.audioNode;
+	}
+
 	get output() {
-		return this.knob().audioNode;
+		return this.signal_.audioNode;
 	}
 
 	/*
-	 * Connects a native AudioNode with one of this Node's knob
-	 * or it's default knob (when no name provided, see knob getter).
+	 * Connects a native AudioNode with one of this Node's knobs
 	 * Returns a reference to this Node.
 	 */
-	connectWithKnob(audioNode, name/*, asParam*/) {
-		audioNode.connect(/*asParam ? this.knob(name).audioParam : */this.knob(name).audioNode);
+	connectWithKnob(audioNode, name) {
+		audioNode.connect(this.knob(name).audioNode);
+		// lets make sure it's not currently value locked
+		//this.knob(name).unlock();
+		return this;
+	}
+
+	connectWithInput(audioNode) {
+		audioNode.connect(this.input);
 		return this;
 	}
 
 	/*
-	 * Connects a native AudioNode to this Node's output
-	 * and returns a reference to this Node.
+	 * Connects a native AudioNode to this Nodule's output
+	 * and returns a reference to this Nodule.
 	 */ 
+	/*
 	connectToOutput(audioNodeOrParam) {
 		this.output.connect(audioNodeOrParam);
 		return this;
 	}
+	*/
 
-	static patch(fromNode, toNode, name, asParam) {
-		toNode.connectWithKnob(fromNode.output, name, asParam);
-		return toNode;
+	static patch(fromNodule, toNodule, name) {
+		if (name) {
+			toNodule.connectWithKnob(fromNodule.output, name);	
+		} else {
+			toNodule.connectWithInput(fromNodule.output);
+		}
+
+		Context.registerPatch(fromNodule, toNodule);
+
+		return toNodule;
 	}
 
 	static tokenizeName(name) {

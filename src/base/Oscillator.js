@@ -5,16 +5,18 @@ const DEFAULT_FREQ = 440;
 class Oscillator extends Nodule {
 
 	constructor(frequency = DEFAULT_FREQ) {
-		super(0, 'Oscillator');
+		super('Oscillator');
 		this.frequency = frequency;
 		this.resetTime = 0;
 
 		this.createKnob('frequency');
 
+		/*
 		this.createKnob('oct');
 		this.createKnob('fm');
 		this.createKnob('phase');
 		this.createKnob('reset');
+		*/
 	}
 
 	tdtf(sample, time, knobsDataHash, knobBufferOffset) {
@@ -26,14 +28,18 @@ class Oscillator extends Nodule {
 			frequencyCV = frequencyCVBuffer[knobBufferOffset];
 			if (this.resetTime == 0) {
 				this.resetTime = time;
-				this.log('reset at: ' + time, true);
+				//this.log('reset at: ' + time, true);
 			}
+
+			//
+
+			//this.log(frequencyCV);
 		}
 
 		let freq = (this.frequency + frequencyCV * 10);
 		let val = Math.sin(2*Math.PI * (time - this.resetTime) * freq);
 
-		this.log('value: ' + val + ' / frequency: ' + freq + ' / frequencyCV: ' + frequencyCV);
+		//this.log('value: ' + val + ' / frequency: ' + freq + ' / frequencyCV: ' + frequencyCV);
 
 		return val;
 	}

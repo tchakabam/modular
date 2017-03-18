@@ -15,34 +15,40 @@
 
 		<!--<div id="ui"></div>-->
 
-		<canvas width="960" height="100" id="canvas"></canvas>
-
-		<svg width="960" height="600" id="ui"></svg>
+		<div id='ui' style="width: 960px; height: 800px;">
+			<canvas style="width: 100%;height: 10%" class="waveform"></canvas>
+			<div style="width: 100%;height: 10%" class="menu"></div>
+			<div style="width: 960px; height: 600px; overflow: scroll;">
+				<svg width="1500" height="960" class="patchzone"></svg>
+			</div>
+		</div>
 
 		<script type="text/javascript">
-			
+
+			function createNodulesDropDownList() {
+				
+			}
+
 			function start() {
-				var osc = new modular.Oscillator(500);
-				//var osc2 = new modular.Oscillator(240);
-				var lfo = new modular.Oscillator(400);
-				//lfo.name = 'lfo0';
-				var gain = window.gain = new modular.Gain();
+				var osc = new modular.create('Oscillator', {frequency: 200});
+				var lfo1 = new modular.create('Oscillator', {frequency: 0.5});
+				var lfo2 = new modular.create('Oscillator', {frequency: 1.0});
+				var gain = new modular.create('NativeGain');
+				var lfo2Gain = new modular.create('NativeGain', {gain: 20.0});
 
 				modular.Context.setUIElement('ui');
 
-				modular.Nodule.patch(lfo, osc, 'frequency');
-
-				modular.Nodule.patch(osc, gain);
-				//modular.Nodule.patch(osc2, gain);
-
-				gain.knob('gain').value = 0.0;
-
-				modular.Context.patchToDevice(gain, 1.0);
-
-				modular.Context.refreshUI();
+				modular.patch(osc, gain);
+				modular.patch(lfo2, lfo2Gain);
+				modular.patch(lfo2Gain, osc, 'frequency');
+				//modular.patch(lfo1, gain, 'gain');
 
 				gain.knob('gain').value = 1.0;
+
+				modular.Context.patchToDevice(gain, 0.0);
+				modular.Context.refreshUI();
 			}
+
 
 			function testKnob() {
 

@@ -52,7 +52,7 @@ class Context {
 		const destination = Context.destination;
 		const audioNode = nodule.output;
 
-		Context.registerPatch(nodule, null, gain);
+		Context.registerPatch(nodule, null, 'x' + gain);
 
 		if (gain < 1.0) {
 			const gainNode = Context.getOrCreateDefaultAudioContext().createGain();
@@ -93,11 +93,11 @@ class Context {
 		return defaultAudioSourceNode;
 	}
 
-	static registerPatch(from, to, gain) {
+	static registerPatch(from, to, knobName) {
 		patches.push({
 			from,
 			to,
-			gain
+			knobName
 		});
 	}
 

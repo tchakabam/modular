@@ -1,8 +1,9 @@
 import Nodule from '../core/Nodule';
+import Factory from '../core/Factory';
 
 class Identity extends Nodule {
 
-	constructor(name) {
+	constructor({name} = {}) {
 		super(name || 'Identity');
 	}
 
@@ -10,5 +11,10 @@ class Identity extends Nodule {
 		return inSample;
 	}
 }
+
+Factory.define(Identity, {
+	name: 'Identity',
+	type: Factory.Types.NODULE
+});
 
 export default Identity;

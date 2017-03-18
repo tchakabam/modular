@@ -72,6 +72,11 @@ class Knob {
 		}
 		doer.maybeLog('Knob' + this.id + ' > ' + message);
 	}
+
+	debug() {
+		this.log('debug()', true);
+		this.log('current value: ' + this.value, true);
+	}
 }
 
 export default Knob;

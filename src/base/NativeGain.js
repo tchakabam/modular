@@ -1,11 +1,12 @@
 import Identity from './Identity';
 import Context from '../core/Context';
+import Factory from '../core/Factory';
 
 const defaultAudioCtx = Context.getOrCreateDefaultAudioContext();
 
 class NativeGain extends Identity {
-	constructor(gain = 1.0) {
-		super('NativeGain');
+	constructor({gain} = {}) {
+		super({name: 'Gain'});
 
 		// insert GainNode
 		this.gainNode = defaultAudioCtx.createGain();
@@ -13,7 +14,7 @@ class NativeGain extends Identity {
 		// connect to param
 		this.createKnob('gain').drive(this.gainNode.gain);
 
-		this.knob('gain').value = 1.0;
+		this.knob('gain').value = gain || 1.0;
 	}
 
 	tick(inSample, time, knobsDataHash, knobBufferOffset) {
@@ -28,5 +29,10 @@ class NativeGain extends Identity {
 		return this.gainNode;
 	}
 }
+
+Factory.define(NativeGain, {
+	name: 'NativeGain',
+	type: Factory.Types.NODULE
+});
 
 export default NativeGain;

@@ -2,6 +2,39 @@ const d3 = require('d3');
 
 const DESTINATION_ID = '*';
 
+const Events = {
+	CLICK: "click",
+	DRAGSTARTED: "dragstarted",
+	DRAGENDED: "dragended"
+}
+
+import Context from '../core/Context';
+
+class Controller {
+
+	constructor(model) {
+		// TODO: detect / verify expectations of some-sort of model INTERFACE !
+
+		this.model_ = model;
+	}
+
+	get model() {
+		return this.model_;
+	}
+
+	handle(eventType) {
+		switch(eventType) {
+		case Events.CLICK:
+			if (typeof this.model.debug === 'function') {
+				this.model.debug();	
+			} else {
+				console.error('no debug function found in model!');
+			}
+			break;
+		}
+	}
+}
+
 class Graph {
 	constructor({nodules, patches, uiElement}) {
 		this.nodules = nodules;
@@ -10,8 +43,10 @@ class Graph {
 	}
 
 	getCollectedGraphData() {
+		const controllers = {};
 		const nodes = [];
 		const links = [];
+		const halos = [];
 
 		let groupNo = 0;
 
@@ -20,29 +55,112 @@ class Graph {
 			id: DESTINATION_ID,
 			group: groupNo++
 		});
+		controllers[DESTINATION_ID] = new Controller({
+			debug: () => {
+				console.debug(Context.getOrCreateDefaultAudioContext().destination);
+			}
+		});
+
+		const linkedNodes = [];
+		function insertIntoLinkedNodesOnce(name) {
+			if (linkedNodes.indexOf(name) >= 0) { 
+				linkedNodes.push(name); 
+			}
+		};
+
+		const unlinkedNodes = [];
+		this.nodules.forEach((nodule) => { unlinkedNodes.push(nodule.name) });
+
+		function spliceUnlinkedNodesByName(name) {
+			let index = unlinkedNodes.indexOf(name);
+			if (index >= 0) {
+				unlinkedNodes.splice(index, 1);
+			}
+		};
 
 		this.nodules.forEach((nodule) => {
 			nodes.push({
 				id: nodule.name,
 				group: groupNo
 			});
+			controllers[nodule.name] = new Controller(nodule);
 		});
 
 		this.patches.forEach((patch) => {
 
 			const target = patch.to !== null ? patch.to.name : DESTINATION_ID;
+			const source = patch.from.name;
 
 			links.push({
-				source: patch.from.name,
+				source,
 				target,
+				value: 1,
+				group: groupNo,
+				knobName: patch.knobName
+			});
+
+			insertIntoLinkedNodesOnce(source);
+			insertIntoLinkedNodesOnce(target);
+
+			spliceUnlinkedNodesByName(source);
+			spliceUnlinkedNodesByName(target);
+		});
+
+		unlinkedNodes.forEach((nodeName) => {
+
+			halos.push({
+				source: nodeName,
+				target: DESTINATION_ID,
 				value: 1
 			});
 		});
 
 		return {
+			linkedNodes,
+			unlinkedNodes,
+			halos,
 			nodes,
-			links
+			links,
+			controllers
 		};
+	}
+
+	// TODO: own class for Menu
+	setupMenu() {
+		const elementId = this.elementId;
+		const menu = d3.select('#' + elementId + '>.menu');
+		const selectNoduleFromFactory = menu.append('select')
+			.attr('id', 'select-nodule')
+			.style('font-size', '2em');
+			//.style('position', 'relative')
+			//.style('top', '50%')
+			//.style('left', '50%');
+		const Factory = modular.Factory;
+		const allNodules = Factory.collectType(Factory.Types.NODULE).names;
+		allNodules.forEach((noduleFactoryName) => {
+			const option = selectNoduleFromFactory.append('option')
+				.html(noduleFactoryName)
+				.attr('value', noduleFactoryName);
+			console.log(option);
+		});
+		menu.append('button')
+			.style('margin-left', '1em')
+			.style('font-size', '2em')
+			.html('Add nodule')
+			.on('click', Graph.onAddNoduleClick);
+	}
+
+	static onAddNoduleClick(e) {
+		//console.log(selectNoduleFromFactory);
+
+		var nodule;
+
+		nodule = d3.selectAll('#select-nodule > option').nodes().filter(function(option) {
+			return option.selected;
+		})[0].value;
+		
+		modular.create(nodule);
+		modular.Context.refreshUI();
 	}
 
 	refresh() {
@@ -51,14 +169,22 @@ class Graph {
 
 		console.log(graph);
 
-		const radius = 60;
+		const radius = 30;
 
-		const svg = d3.select("#" + elementId),
+		const menu = d3.select('#' + elementId + '>.menu');
+
+		if (menu.node().innerHTML.length === 0) {
+			this.setupMenu();
+		}
+
+		const svg = d3.select("#" + elementId + '>div>svg'),
 		    width = + svg.attr("width"),
 		    height = + svg.attr("height");
 
 		// first lets clear everything
 		svg.html("");
+
+		svg.style("background-color", "#004358");
 
 		svg.append("defs").append("marker")
 		    .attr("id", "arrowhead")
@@ -78,7 +204,32 @@ class Graph {
 			.data(graph.links)
 			.enter().append("line")
 		    	.attr("stroke-width", 2)
+		    	//.attr("stroke", "#BEDB39")
 		    	.attr("marker-end", "url(#arrowhead)");
+
+	  	const halo = svg.append("g")
+		    .attr("class", "links")
+			.selectAll("line")
+			.data(graph.halos)
+			.enter().append("line")
+				.style("stroke-dasharray", ("3, 3"))
+		    	.attr("stroke-width", 2)
+		    	//.attr("stroke", "red")
+		    	.attr("marker-end", "url(#arrowhead)");
+
+	  	const label = svg.append("g")
+		    .attr("class", "labels")
+			.selectAll("text")
+			.data(graph.links)
+			.enter().append("text")
+	    		.text(function(d) { return d.knobName || '+'; })
+	    		.attr("text-anchor", "middle")
+	    		.attr("y", "50%")
+	    		.attr("x", "50%")
+	    		.attr("dy", ".3em")
+	    		.attr("font-family", "Helvetica")
+	    		.attr("font-size", "15px")
+	    		.attr("stroke", "#000");
 
 	  	const node = svg.append("g")
 		  	.attr("class", "nodes")
@@ -91,8 +242,14 @@ class Graph {
 			node.append("circle")
 					.attr("r", radius)
 					.attr("fill", function(d) { 
-						return color(d.group);
+						//return color(d.group);
+						if (d.group === 0) {
+							return "#FD7400";		
+						} else {
+							return "#FFE11A";
+						}
 					})
+					.on("click", onCircleClick)
 					.call(d3.drag()
 						.on("start", dragstarted)
 						.on("drag", dragged)
@@ -100,13 +257,13 @@ class Graph {
 
 		    node.append("text")
 		    	.text(function(d) { return d.id; })
-				.attr("text-anchor", "middle")
-				.attr("stroke", "#000")
-				.attr("font-size", "1em")
-				.attr("font-family", "Helvetica")
-				.attr("dy", ".3em")
-				.attr("x", "50%")
-				.attr("y", "50%");
+					.attr("text-anchor", "middle")
+					.attr("stroke", "#000")
+					.attr("font-size", "1em")
+					.attr("font-family", "Helvetica")
+					.attr("dy", ".3em")
+					.attr("x", "50%")
+					.attr("y", "50%");
 
 		const simulation = d3.forceSimulation()
 		    .nodes(graph.nodes)
@@ -116,17 +273,34 @@ class Graph {
 		    	.distance(3*radius)
 		    	.links(graph.links)
 		    )
-		    .force("charge", d3.forceManyBody()
-		    	.strength(-1000)
+		    .force("halo", d3.forceLink()
+		    	.id(function(d) { return d.id; })
+		    	.distance(0.5*radius)
+		    	.links(graph.halos)
 		    )
+		    .force("charge", d3.forceManyBody()
+		    	.strength(-3000)
+		    )
+			.force("collision", d3.forceCollide(2*radius))
 		    .force("center", d3.forceCenter(width / 2, height / 2));
 
 		function ticked() {
+
 			link
 			    .attr("x1", function(d) { return d.source.x; })
 			    .attr("y1", function(d) { return d.source.y; })
 			    .attr("x2", function(d) { return d.target.x; })
 			    .attr("y2", function(d) { return d.target.y; });
+
+			halo
+			    .attr("x1", function(d) { return d.source.x; })
+			    .attr("y1", function(d) { return d.source.y; })
+			    .attr("x2", function(d) { return d.target.x; })
+			    .attr("y2", function(d) { return d.target.y; });
+
+			label
+			    .attr("x", function(d) { return d.source.x + (d.target.x - d.source.x) / 2 })
+			    .attr("y", function(d) { return d.source.y + (d.target.y - d.source.y) / 2 });
 
 			node
 				.selectAll("circle")
@@ -140,20 +314,29 @@ class Graph {
 		}
 
 		function dragstarted(d) {
-		  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-		  d.fx = d.x;
-		  d.fy = d.y;
+			if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+			d.fx = d.x;
+			d.fy = d.y;
 		}
 
 		function dragged(d) {
-		  d.fx = d3.event.x;
-		  d.fy = d3.event.y;
+			d.fx = d3.event.x;
+			d.fy = d3.event.y;
 		}
 
 		function dragended(d) {
-		  if (!d3.event.active) simulation.alphaTarget(0);
-		  d.fx = null;
-		  d.fy = null;
+			if (!d3.event.active) simulation.alphaTarget(0);
+			d.fx = null;
+			d.fy = null;
+		}
+
+		function onCircleClick(e) {
+			console.log(e);
+			getController(e).handle(Events.CLICK);
+		}
+
+		function getController(obj) {
+			return graph.controllers[obj.id];
 		}
 	}
 }

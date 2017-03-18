@@ -1,14 +1,18 @@
-const Nodule = require('./src/core/Nodule').default;
-const Context = require('./src/core/Context').default;
-const Oscillator = require('./src/base/Oscillator').default;
-
-import Gain from './src/base/NativeGain';
 import Knob from './src/core/Knob';
+import Factory from './src/core/Factory';
+import Context from './src/core/Context';
+import Nodule from './src/core/Nodule';
+
+// Factory entry point
+require('./src/base/all');
 
 module.exports = {
 	Context,
-	Oscillator,
-	Gain,
 	Nodule,
-	Knob
+	Knob,
+	Factory,
+	create: (name, options, type = Factory.Types.NODULE) => {
+		return Factory.createInstance({name, type, options});
+	},
+	patch: Nodule.patch
 };

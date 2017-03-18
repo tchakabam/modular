@@ -2,9 +2,16 @@ var path = require('path');
 
 const library = 'modular';
 
-function makeConfig({libraryTarget}) {
+var glob = require("glob");
+
+var entries = ['./index.js'];
+
+function makeConfig(opts) {
+
+	var libraryTarget = opts.libraryTarget;
+
     return {
-        entry: './index.js',
+        entry: entries,
         output: {
             path: path.join(__dirname, 'build'),
             filename: library + '.' + libraryTarget + '.js',

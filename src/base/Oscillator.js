@@ -1,41 +1,103 @@
 import Nodule from '../core/Nodule';
+import Factory from '../core/Factory';
 
 const DEFAULT_FREQ = 440;
 
+const DEFAULT_SAMPLING_FREQ = 44100;
+
+const DEFAULT_WAVETABLE = (function (samples) {
+
+	let wave = [];
+	for (let i = 0; i < samples; i++) {
+		var normTime = (i / samples);
+		var signal = Math.sin(2 * Math.PI * normTime);
+		wave.push(signal);
+	}
+	return wave;
+
+})(DEFAULT_SAMPLING_FREQ);
+
+//console.debug(DEFAULT_WAVETABLE);
+
 class Oscillator extends Nodule {
 
-	constructor(frequency = DEFAULT_FREQ) {
+	constructor({frequency} = {}) {
 		super('Oscillator');
-		this.frequency = frequency;
-		this.resetTime = 0;
 
-		this.createKnob('frequency');
+		this.createKnob('frequency').value = frequency || DEFAULT_FREQ;
 
 		//this.createKnob('oct');
 		/*
-		
 		this.createKnob('fm');
 		this.createKnob('phase');
 		this.createKnob('reset');
 		*/
+
+		this.minFreq = Infinity;
+		this.maxFreq = -1;
+		this.baseFreq = frequency;
+		this.previousVal = null;
+
+		this.wavePeriod = DEFAULT_SAMPLING_FREQ;
+		this.wave = DEFAULT_WAVETABLE;
+		this.previousNormTime = -1;
+		this.previousWaveOffset = -1;
 	}
 
 	tdtf(sample, time, knobsDataHash, knobBufferOffset) {
 
 		const frequencyCVBuffer = knobsDataHash['frequency'];
 
-		let frequencyCV = 0;
+		let phase = 0;
+
+		let freq = 0;
+		// FIXME: this check shouldn't be needed
 		if (frequencyCVBuffer) {
-			frequencyCV = frequencyCVBuffer[knobBufferOffset];
+			freq = frequencyCVBuffer[knobBufferOffset];
+		} else {
+			freq = this.knob('frequency').value;
+			this.print('no CV!');
 		}
 
-		let freq = (this.frequency + frequencyCV * 10);
-		let val = Math.sin(2*Math.PI * (time - this.resetTime) * freq);
+		// compute modulation (FIXME!! clicks with FM because we are not normalizing the time-frequency-domains)
 
-		//this.log('value: ' + val + ' / frequency: ' + freq + ' / frequencyCV: ' + frequencyCV);
+		if (this.previousNormTime >= this.wave.length) {
+			this.previousNormTime = -1;
+		}
+
+		let normFreq = (freq / (this.wave.length / 2)) * (DEFAULT_SAMPLING_FREQ / 2);
+		let waveOffset = Math.floor(++this.previousNormTime * normFreq);
+
+		// XP: PM mode
+		let normBaseFreq = (this.baseFreq / (this.wave.length / 2)) * (DEFAULT_SAMPLING_FREQ / 2);
+		let normModFreq = ((freq - this.baseFreq) / (this.wave.length / 2)) * (DEFAULT_SAMPLING_FREQ / 2);
+		//waveOffset = Math.floor(++this.previousNormTime * normFreq + normModFreq);
+
+		let val = this.wave[waveOffset % this.wave.length];
+
+		this.previousWaveOffset = waveOffset;
+		this.previousVal = val;
+
+		//this.log('value: ' + val + ' / frequency: ' + freq + ' / previousNormTime: ' + this.previousNormTime + ' / normFreq: ' + normFreq + ' / waveOffset: ' + waveOffset);
+
+		if (this.maxFreq < freq) {
+			//console.debug("max freq: " + freq);
+			this.maxFreq = freq;
+		}
+
+		if (this.minFreq > freq) {
+			//console.debug("min freq: " + freq);
+			this.minFreq = freq;
+		}
+
 
 		return val;
 	}
 }
+
+Factory.define(Oscillator, {
+	name: 'Oscillator',
+	type: Factory.Types.NODULE
+});
 
 export default Oscillator;

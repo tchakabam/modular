@@ -39,8 +39,16 @@ class Nodule {
 			throw new Error('Cant create scriptProcNode with invalid number of params');
 		}
 
+		if (this._channelMerger) {
+			this._channelMerger.disconnect();
+		}
+		if (this._scriptProcNode) {
+			this._scriptProcNode.disconnect();
+		}
+
 		this._channelMerger = defaultAudioCtx.createChannelMerger(noOfParams + 1);
 		this._scriptProcNode = defaultAudioCtx.createScriptProcessor(this.bufferSize, noOfParams + 1, 1);
+
 		this._scriptProcNode.onaudioprocess = (audioProcessingEvent) => {
 			const {inputBuffer, outputBuffer} = audioProcessingEvent;
 			const sampleDuration = inputBuffer.duration / inputBuffer.length;
@@ -67,6 +75,7 @@ class Nodule {
 	}
 
 	set name(n) {
+		throw new Error('Nodule names are currently read-only (FIXME)');
 		this.name_ = n;
 	}
 
@@ -83,9 +92,14 @@ class Nodule {
 			return;
 		}
 		if (always) {
-			console.log(this.name + ' > ' + message);
+			this.print(message);
+			return;
 		}
 		doer.maybeLog(this.name + ' > ' + message);
+	}
+
+	print(message) {
+		window.console.log(this.name + ' > ' + message);
 	}
 
 	process(inData, outData, paramHash, time, sampleDuration) {
@@ -99,7 +113,7 @@ class Nodule {
 				paramHash, 
 				sample);
 
-			// now the dsp func
+			// now the "dsp" time-domain transfer func
 			outData[sample] = this.tdtf(
 				inData[sample], 
 				time + (sample * sampleDuration), 
@@ -187,6 +201,17 @@ class Nodule {
 		this.output.connect(audioNode);
 	}
 
+	debug() {
+		this.print('');
+		this.print('debug()');
+		this.print('nodule name: ' + this.name);
+		this.print('knobs: ' + this.knobs.size);
+		this.knobs.forEach((knob, knobKeyName) => {
+			this.print('mapped as: ' + knobKeyName);
+			knob.debug();
+		}, this);
+	}
+
 	/*
 	 * Connects a native AudioNode to this Nodule's output
 	 * and returns a reference to this Nodule.
@@ -197,15 +222,14 @@ class Nodule {
 		return this;
 	}
 	*/
-
-	static patch(fromNodule, toNodule, name) {
-		if (name) {
-			toNodule.plugKnob(fromNodule.output, name);	
+	static patch(fromNodule, toNodule, knobName = null) {
+		if (knobName) {
+			toNodule.plugKnob(fromNodule.output, knobName);
 		} else {
 			toNodule.plugInput(fromNodule.output);
 		}
 
-		Context.registerPatch(fromNodule, toNodule);
+		Context.registerPatch(fromNodule, toNodule, knobName);
 
 		return toNodule;
 	}

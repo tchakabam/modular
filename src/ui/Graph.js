@@ -1,4 +1,4 @@
-const d3 = require('d3');
+const d3 = window.d3 = require('d3');
 
 const DESTINATION_ID = '*';
 
@@ -13,7 +13,7 @@ import Context from '../core/Context';
 class Controller {
 
 	constructor(model) {
-		// TODO: detect / verify expectations of some-sort of model INTERFACE !
+		// TODO: detect / verify expectations of some-sort of model interface !
 
 		this.model_ = model;
 	}
@@ -236,6 +236,7 @@ class Graph {
 		    .selectAll("circle")
 		    .data(graph.nodes)
 		    .enter().append("g")
+		    	.attr('nodule-name', function(d) { return d.id; })
 		    	.attr("width", 2*radius)
 		    	.attr("height", 2*radius);
 
@@ -249,6 +250,7 @@ class Graph {
 							return "#FFE11A";
 						}
 					})
+					.attr('nodule-name', function(d) { return d.id; })
 					.on("click", onCircleClick)
 					.call(d3.drag()
 						.on("start", dragstarted)
@@ -257,6 +259,7 @@ class Graph {
 
 		    node.append("text")
 		    	.text(function(d) { return d.id; })
+		    		.attr('nodule-name', function(d) { return d.id; })
 					.attr("text-anchor", "middle")
 					.attr("stroke", "#000")
 					.attr("font-size", "1em")
@@ -332,6 +335,17 @@ class Graph {
 
 		function onCircleClick(e) {
 			console.log(e);
+
+			const circles = svg.selectAll('circle');
+
+			const circle = d3.select(svg.selectAll('circle').nodes().filter(function(elem) {
+				console.log(elem.attributes['nodule-name'].value);
+				return elem.attributes['nodule-name'].value ===  e.id;
+			})[0]);
+
+			circles.classed('node-selected', false);
+			circle.classed('node-selected', true);
+
 			getController(e).handle(Events.CLICK);
 		}
 

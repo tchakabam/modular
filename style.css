@@ -4,6 +4,28 @@
 }
 
 .nodes g circle {
-  stroke: #fff;
+  stroke: orange;
   stroke-width: 1.5px;
 }
+
+.node-selected {
+  animation-name: node-selected-animation;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes node-selected-animation {
+    0% {
+    	stroke-width: 1.5px;
+    	stroke: #999;
+    }
+    50% {
+    	stroke-width: 12px;
+    	stroke: orange;
+    }
+    100% {
+    	stroke-width: 1.5px;
+    	stroke: #999;
+    }
+}
+

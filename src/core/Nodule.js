@@ -22,6 +22,9 @@ class Nodule {
 			throw new Error('A base name must be provided');
 		}
 
+		this.inputUnpluggers = [];
+		this.knobUnpluggers = [];
+
 		this.scriptProcNode = null;
 
 		this._createScriptProc(0);
@@ -188,17 +191,58 @@ class Nodule {
 	 * Returns a reference to this Node.
 	 */
 	plugKnob(audioNode, name) {
-		audioNode.connect(this.knob(name).param);
+		const audioParam = this.knob(name).param;
+		audioNode.connect(audioParam);
+		this.knobUnpluggers.push({
+			src: audioNode,
+			knobParam: audioParam,
+			run: () => {
+				audioNode.disconnect(audioParam);
+			}
+		});
 		return this;
+	}
+
+	unplugKnob(audioNode, name) {
+		const audioParam = this.knob(name).param;
+		audioNode.disconnect(audioParam);
+		this.knobUnpluggers.splice(
+			this.knobUnpluggers.findIndex((ku) => ku.src === audioNode), 
+			1
+		);
 	}
 
 	plugInput(audioNode) {
-		audioNode.connect(this.input);
+		const inputNode = this.input;
+		audioNode.connect(inputNode);
+		this.inputUnpluggers.push({
+			src:audioNode,
+			inputNode,
+			run: () => {
+				audioNode.disconnect(inputNode);
+			}
+		});
 		return this;
 	}
 
+	unplugInput(audioNode) {
+		audioNode.disconnect(this.input);
+		this.inputUnpluggers.splice(
+			this.inputUnpluggers.findIndex((iu) => iu.src === audioNode), 
+			1
+		);
+	}
+
+	/*
 	drive(audioNode) {
 		this.output.connect(audioNode);
+	}
+	*/
+
+	unplugEverything() {
+		this.output.disconnect();
+		this.knobUnpluggers.forEach((ku) => ku.run());
+		this.inputUnpluggers.forEach((iu) => iu.run());
 	}
 
 	debug() {
@@ -232,6 +276,17 @@ class Nodule {
 		Context.registerPatch(fromNodule, toNodule, knobName);
 
 		return toNodule;
+	}
+
+	static unpatch(fromNodule, toNodule, knobName = null) {
+
+		Context.unregisterPatch(fromNodule, toNodule, knobName);
+
+		if (knobName) {
+			toNodule.unplugKnob(fromNodule.output, knobName);
+		} else {
+			toNodule.unplugInput(fromNodule.output);
+		}	
 	}
 
 	static tokenizeName(name) {

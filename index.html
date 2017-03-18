@@ -38,7 +38,7 @@
 				var gain = new modular.create('NativeGain');
 				var lfo2Gain = new modular.create('NativeGain', {gain: 20.0});
 
-				modular.Context.setUIElement('ui');
+				modular.setUIElement('ui');
 
 				modular.patch(osc, gain);
 				modular.patch(lfo2, lfo2Gain);
@@ -47,8 +47,11 @@
 
 				gain.knob('gain').value = 1.0;
 
-				modular.Context.patchToDevice(gain, 0.0);
-				modular.Context.refreshUI();
+				modular.patchToDevice(gain, 0.0);
+
+				//modular.unpatch(osc, gain);
+
+				modular.refreshUI();
 			}
 
 

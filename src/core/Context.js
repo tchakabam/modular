@@ -94,11 +94,34 @@ class Context {
 	}
 
 	static registerPatch(from, to, knobName) {
+		const patchIndex = patches.findIndex(
+			(patch) => 
+				patch.from === from 
+				&& patch.to === to
+				&& patch.knobName === knobName
+		);
+		if (patchIndex >= 0) {
+			throw new Error('Patch requested to register already registered!');
+		}
 		patches.push({
 			from,
 			to,
 			knobName
 		});
+	}
+
+	static unregisterPatch(from, to, knobName) {
+		const patchIndex = patches.findIndex(
+			(patch) => 
+				patch.from === from 
+				&& patch.to === to
+				&& patch.knobName === knobName
+		);
+		console.log('unregisterPatch', patchIndex);
+		if (patchIndex < 0) {
+			throw new Error('Patch requested to unregister was never registered!');
+		}
+		patches.splice(patchIndex, 1);
 	}
 
 	static registerNodule(nodule) {
@@ -107,6 +130,16 @@ class Context {
 			throw new Error('Nodule was already added to context: ' + name);
 		}
 		nodules.set(name, nodule);
+
+		return Context;
+	}
+
+	static unregisterNodule(nodule) {
+		const name = nodule.name
+		if (!nodules.has(name)) {
+			throw new Error('Nodule was never added to context: ' + name);
+		}
+		nodules.delete(name);
 
 		return Context;
 	}

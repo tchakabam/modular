@@ -4,28 +4,38 @@
 }
 
 .nodes g circle {
-  stroke: orange;
-  stroke-width: 1.5px;
+  fill: #FFE11A;
+  stroke: #EB4B3F;
+  stroke-width: 4px;
 }
 
-.node-selected {
+.nodes .node-is-destination {
+	fill: #EB263F;
+	stroke: #BEDB39;
+	stroke-width: 4px;
+}
+
+.nodes .node-selected {
   animation-name: node-selected-animation;
-  animation-duration: 2s;
+  animation-duration: 0.4s;
   animation-iteration-count: infinite;
 }
 
 @keyframes node-selected-animation {
     0% {
-    	stroke-width: 1.5px;
-    	stroke: #999;
+    	fill: #FFE11A;
+    	stroke-width: 2px;
+    	stroke: #52D1D9;
     }
     50% {
-    	stroke-width: 12px;
-    	stroke: orange;
+    	fill: #EB4B3F;
+    	stroke-width: 4px;
+    	stroke: #1F8A70;
     }
     100% {
-    	stroke-width: 1.5px;
-    	stroke: #999;
+    	fill: #FFE11A;
+    	stroke-width: 2px;
+    	stroke: #52D1D9;
     }
 }
 

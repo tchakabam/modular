@@ -1,14 +1,13 @@
-const d3 = window.d3 = require('d3');
+import Context from '../core/Context';
+const d3 = require('d3');
 
 const DESTINATION_ID = '*';
 
 const Events = {
 	CLICK: "click",
-	DRAGSTARTED: "dragstarted",
-	DRAGENDED: "dragended"
+	DRAGSTARTED: "drag-started",
+	DRAGENDED: "drag-ended"
 }
-
-import Context from '../core/Context';
 
 class Controller {
 
@@ -40,9 +39,20 @@ class Graph {
 		this.nodules = nodules;
 		this.patches = patches;
 		this.elementId = uiElement.id;
+		this.collectedGraphData = null;
+		this.svg = null;
+		this.selectedNodeId_ = null;
 	}
 
-	getCollectedGraphData() {
+	set selectedNodeId(id) {
+		this.selectedNodeId_ = id;
+	}
+
+	get selectedNodeId() {
+		return this.selectedNodeId_;
+	}
+
+	generateCollectedGraphData() {
 		const controllers = {};
 		const nodes = [];
 		const links = [];
@@ -143,29 +153,79 @@ class Graph {
 				.attr('value', noduleFactoryName);
 			console.log(option);
 		});
+
+		// + button
 		menu.append('button')
 			.style('margin-left', '1em')
 			.style('font-size', '2em')
-			.html('Add nodule')
-			.on('click', Graph.onAddNoduleClick);
+			.html('(+)')
+			.on('click', this.onAddClick.bind(this));
+
+		// - button 
+		menu.append('button')
+			.style('margin-left', '1em')
+			.style('font-size', '2em')
+			.html('(-)')
+			.on('click', this.onSubClick.bind(this));		
 	}
 
-	static onAddNoduleClick(e) {
+	getSelectMenuValue() {
+		return d3.selectAll('#select-nodule > option')
+			.nodes().filter(function(option) {
+				return option.selected;
+		})[0].value;
+	}
+
+	onAddClick() {
 		//console.log(selectNoduleFromFactory);
 
-		var nodule;
-
-		nodule = d3.selectAll('#select-nodule > option').nodes().filter(function(option) {
-			return option.selected;
-		})[0].value;
+		const noduleFactoryName = this.getSelectMenuValue();
 		
-		modular.create(nodule);
+		modular.create(noduleFactoryName);
 		modular.Context.refreshUI();
+	}
+
+	onSubClick() {
+
+		//console.log(this.selectedNodeId);
+
+		
+	}
+
+	getD3CircleById(id) {
+		const circle = d3.select(this.svg.selectAll('circle').nodes().filter(function(elem) {
+			console.log(elem.attributes['nodule-name'].value);
+			return elem.attributes['nodule-name'].value ===  id;
+		})[0]);
+		return circle;
+	}
+
+	getAllD3Circles() {
+		return this.svg.selectAll('circle');
+	}
+
+	onCircleClick(e) {
+		//console.log(e);
+
+		// update style
+		this.getAllD3Circles().classed('node-selected', false);
+		this.getD3CircleById(e.id).classed('node-selected', true);
+
+		// update internal state
+		this.selectedNodeId = e.id;
+
+		// propagate to controller
+		this.getController(e).handle(Events.CLICK);
+	}
+
+	getController(obj) {
+		const {collectedGraphData} = this;
+		return collectedGraphData.controllers[obj.id];
 	}
 
 	refresh() {
 		const elementId = this.elementId;
-		const graph = this.getCollectedGraphData();
+		const graph = this.collectedGraphData = this.generateCollectedGraphData();
 
 		console.log(graph);
 
@@ -177,15 +237,17 @@ class Graph {
 			this.setupMenu();
 		}
 
-		const svg = d3.select("#" + elementId + '>div>svg'),
+		const svg = this.svg = d3.select("#" + elementId + '>div>svg'),
 		    width = + svg.attr("width"),
 		    height = + svg.attr("height");
 
 		// first lets clear everything
-		svg.html("");
+	 	svg.html("");
 
-		svg.style("background-color", "#004358");
+		// background
+		svg.style("background-color", "#38FFD0");
 
+		// defs
 		svg.append("defs").append("marker")
 		    .attr("id", "arrowhead")
 		    .attr("refX", radius) /*must be smarter way to calculate shift*/
@@ -196,8 +258,10 @@ class Graph {
 		    .append("path")
 		        .attr("d", "M 0,0 V 4 L6,2 Z"); //this is actual shape for arrowhead
 
-		const color = d3.scaleOrdinal(d3.schemeCategory20);
+		// ???
+		//const color = d3.scaleOrdinal(d3.schemeCategory20);
 
+		// links
 	  	const link = svg.append("g")
 		    .attr("class", "links")
 			.selectAll("line")
@@ -207,6 +271,7 @@ class Graph {
 		    	//.attr("stroke", "#BEDB39")
 		    	.attr("marker-end", "url(#arrowhead)");
 
+		// halo-links
 	  	const halo = svg.append("g")
 		    .attr("class", "links")
 			.selectAll("line")
@@ -217,6 +282,7 @@ class Graph {
 		    	//.attr("stroke", "red")
 		    	.attr("marker-end", "url(#arrowhead)");
 
+		// labels
 	  	const label = svg.append("g")
 		    .attr("class", "labels")
 			.selectAll("text")
@@ -231,6 +297,7 @@ class Graph {
 	    		.attr("font-size", "15px")
 	    		.attr("stroke", "#000");
 
+	    // nodes -> circles + text
 	  	const node = svg.append("g")
 		  	.attr("class", "nodes")
 		    .selectAll("circle")
@@ -242,23 +309,16 @@ class Graph {
 
 			node.append("circle")
 					.attr("r", radius)
-					.attr("fill", function(d) { 
-						//return color(d.group);
-						if (d.group === 0) {
-							return "#FD7400";		
-						} else {
-							return "#FFE11A";
-						}
-					})
+					.classed('node-is-destination', function(d) { return d.group === 0; })
 					.attr('nodule-name', function(d) { return d.id; })
-					.on("click", onCircleClick)
+					.on("click", this.onCircleClick.bind(this))
 					.call(d3.drag()
-						.on("start", dragstarted)
-						.on("drag", dragged)
-						.on("end", dragended));
+						.on("start", onDragStarted)
+						.on("drag", onDragged)
+						.on("end", onDragEnded));
 
 		    node.append("text")
-		    	.text(function(d) { return d.id; })
+		    	.text(function(d) { return d.id.toUpperCase(); })
 		    		.attr('nodule-name', function(d) { return d.id; })
 					.attr("text-anchor", "middle")
 					.attr("stroke", "#000")
@@ -268,9 +328,10 @@ class Graph {
 					.attr("x", "50%")
 					.attr("y", "50%");
 
+		// Force-simulation ...
 		const simulation = d3.forceSimulation()
 		    .nodes(graph.nodes)
-		    .on("tick", ticked)
+		    .on("tick", onForceSimulationTick)
 		    .force("link", d3.forceLink()
 		    	.id(function(d) { return d.id; })
 		    	.distance(3*radius)
@@ -287,7 +348,7 @@ class Graph {
 			.force("collision", d3.forceCollide(2*radius))
 		    .force("center", d3.forceCenter(width / 2, height / 2));
 
-		function ticked() {
+		function onForceSimulationTick() {
 
 			link
 			    .attr("x1", function(d) { return d.source.x; })
@@ -316,41 +377,21 @@ class Graph {
 				    .attr("y", function(d) { return d.y; });
 		}
 
-		function dragstarted(d) {
+		function onDragStarted(d) {
 			if (!d3.event.active) simulation.alphaTarget(0.3).restart();
 			d.fx = d.x;
 			d.fy = d.y;
 		}
 
-		function dragged(d) {
+		function onDragged(d) {
 			d.fx = d3.event.x;
 			d.fy = d3.event.y;
 		}
 
-		function dragended(d) {
+		function onDragEnded(d) {
 			if (!d3.event.active) simulation.alphaTarget(0);
 			d.fx = null;
 			d.fy = null;
-		}
-
-		function onCircleClick(e) {
-			console.log(e);
-
-			const circles = svg.selectAll('circle');
-
-			const circle = d3.select(svg.selectAll('circle').nodes().filter(function(elem) {
-				console.log(elem.attributes['nodule-name'].value);
-				return elem.attributes['nodule-name'].value ===  e.id;
-			})[0]);
-
-			circles.classed('node-selected', false);
-			circle.classed('node-selected', true);
-
-			getController(e).handle(Events.CLICK);
-		}
-
-		function getController(obj) {
-			return graph.controllers[obj.id];
 		}
 	}
 }

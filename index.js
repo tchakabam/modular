@@ -14,5 +14,9 @@ module.exports = {
 	create: (name, options, type = Factory.Types.NODULE) => {
 		return Factory.createInstance({name, type, options});
 	},
-	patch: Nodule.patch
+	patchToDevice: Context.patchToDevice,
+	patch: Nodule.patch,
+	unpatch: Nodule.unpatch,
+	refreshUI: Context.refreshUI,
+	setUIElement: Context.setUIElement
 };

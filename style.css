@@ -21,6 +21,11 @@
   animation-iteration-count: infinite;
 }
 
+button.editing {
+  color: white;
+  background-color: #C32;
+}
+
 @keyframes node-selected-animation {
     0% {
     	fill: #FFE11A;

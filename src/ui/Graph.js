@@ -42,6 +42,7 @@ class Graph {
 		this.collectedGraphData = null;
 		this.svg = null;
 		this.selectedNodeId_ = null;
+		this.editing =  false;
 	}
 
 	set selectedNodeId(id) {
@@ -166,7 +167,15 @@ class Graph {
 			.style('margin-left', '1em')
 			.style('font-size', '2em')
 			.html('(-)')
-			.on('click', this.onSubClick.bind(this));		
+			.on('click', this.onSubClick.bind(this));	
+
+		// edit button 
+		menu.append('button')
+			.style('margin-left', '1em')
+			.style('font-size', '2em')
+			.html('(edit)')
+			.attr('id', 'edit-button')
+			.on('click', this.onEditClick.bind(this));		
 	}
 
 	getSelectMenuValue() {
@@ -192,6 +201,39 @@ class Graph {
 		
 	}
 
+	onEditClick() {
+		this.editing = !this.editing;
+		d3.select('#edit-button').classed('editing', this.editing);
+	}
+
+	onCircleClick(e) {
+		//console.log(e);
+
+		// update internal state
+		if (this.selectedNodeId && this.editing) {
+			const fromNodule = this.getController(this.selectedNodeId).model;
+			const toNodule = this.getController(e.id).model;
+			modular.patch(fromNodule, toNodule);
+			this.refresh();
+			return;
+		}
+
+		if (this.selectedNodeId === e.id) {
+			this.selectedNodeId = null;
+		} else {
+			this.selectedNodeId = e.id;
+		}
+
+		// update styles
+		this.getAllD3Circles().classed('node-selected', false);
+		this.getD3CircleById(e.id).classed('node-selected', !!this.selectedNodeId);
+
+		// propagate to controller
+		if (this.selectedNodeId) {
+			this.getController(e).handle(Events.CLICK);
+		}
+	}
+
 	getD3CircleById(id) {
 		const circle = d3.select(this.svg.selectAll('circle').nodes().filter(function(elem) {
 			console.log(elem.attributes['nodule-name'].value);
@@ -204,32 +246,17 @@ class Graph {
 		return this.svg.selectAll('circle');
 	}
 
-	onCircleClick(e) {
-		//console.log(e);
-
-		// update style
-		this.getAllD3Circles().classed('node-selected', false);
-		this.getD3CircleById(e.id).classed('node-selected', true);
-
-		// update internal state
-		this.selectedNodeId = e.id;
-
-		// propagate to controller
-		this.getController(e).handle(Events.CLICK);
-	}
-
 	getController(obj) {
 		const {collectedGraphData} = this;
-		return collectedGraphData.controllers[obj.id];
+		return collectedGraphData.controllers[obj.id || obj];
 	}
 
 	refresh() {
+		const radius = 30;
 		const elementId = this.elementId;
 		const graph = this.collectedGraphData = this.generateCollectedGraphData();
 
 		console.log(graph);
-
-		const radius = 30;
 
 		const menu = d3.select('#' + elementId + '>.menu');
 

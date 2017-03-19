@@ -47,9 +47,10 @@
 
 				gain.knob('gain').value = 1.0;
 
-				modular.patchToDevice(gain, 0.0);
+				modular.patchToDevice(gain, 1.0);
 
 				//modular.unpatch(osc, gain);
+				//modular.unpatch(lfo2, lfo2Gain);
 
 				modular.refreshUI();
 			}

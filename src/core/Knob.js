@@ -1,19 +1,38 @@
 import Context from './Context';
+import SometimesDoer from '../util/SometimesDoer';
 
-const QUEUE_MAX_SIZE = 4096;
+const ENABLE_LOG = true;
+const LOG_PROBABILITY = 0.01;
 
+const doer = new SometimesDoer(LOG_PROBABILITY);
 const defaultAudioCtx = Context.getOrCreateDefaultAudioContext();
 
-import SometimesDoer from '../util/SometimesDoer';
-const doer = new SometimesDoer(0.01);
-const ENABLE_LOG = true;
-
+/**
+ * @class
+ *
+ * Knob wraps a native GainNode and feeds it with a looped buffer
+ * containing only 1s on a single channel.
+ *
+ * Modulating the GainNode's gain param therefore allows modulating
+ * a constant signal with another node's output.
+ *
+ * Thus we generate a control signal based on an a-rate param.
+ */
 class Knob {
-	constructor(processFunc = function() {}, bufferSize = 8192, initialValue = 0.0) {
+	/**
+	 * @constructs
+	 * @param {number} bufferSize - size of buffer connected to the GainNode
+	 * @param {number} initialValue - initialValue of the GainNode's param
+     * @prop {AudioParam} param - the GainNode's gain param
+     * @prop {number} value - the GainNode's gain param value
+     * @prop {Id} id - this knobs ID
+     *
+	 */
+	constructor(bufferSize = 8192, initialValue = 0.0) {
 		this.id_ = Context.newGuid();
 
 		const gain = defaultAudioCtx.createGain();
-		const buffer = defaultAudioCtx.createBuffer(1, 128, defaultAudioCtx.sampleRate);
+		const buffer = defaultAudioCtx.createBuffer(1, bufferSize, defaultAudioCtx.sampleRate);
 		const arr = buffer.getChannelData(0);
 		for (let i = 0; i < arr.length; i++){
 			arr[i] = 1;
@@ -30,7 +49,16 @@ class Knob {
 		this._gainNode = gain;
 	}
 
-	/* let this Knob drive something (any AudioNode's input) */
+	/**
+     * @method
+     * @param {AudioNode | AudioParam} - native node or param that should be fed by this Knobs signal
+     * @param {number} - input index of node. optional @default 0
+     * @return passes through return value of AudioNode.connect (see https://developer.mozilla.org/en-US/docs/Web/API/AudioNode/connect)
+     * Let this Knob drive something (any AudioNode's input or an AudioParam).
+     * Natively this calls AudioNode.connect on the wrapped GainNode and therefore connects it's ouput
+     * to the passed destination node or param.
+     * If audioNode is an AudioParam it cancels any scheduled values and sets the params offset value to zero.
+     */
 	drive(audioNode, input = 0) {
 
 		// if it's an AudioParam kind off thing we first need set it back to zero
@@ -44,6 +72,14 @@ class Knob {
 			return this._gainNode.connect(audioNode);
 		} else {
 			return this._gainNode.connect(audioNode, 0, input);
+		}
+	}
+
+	free(audioNode, input = 0) {
+		if (input === 0) {
+			this._gainNode.disconnect(audioNode);
+		} else {
+			this._gainNode.disconnect(audioNode, 0, input);
 		}
 	}
 
@@ -63,6 +99,12 @@ class Knob {
 		return this.id_;
 	}
 
+    /**
+     * @method
+     * @param {string} message - a log message
+     * @param {boolean} always- set to true to always log
+     * logs a message based on the doers probability
+     */
 	log(message, always) {
 		if (!ENABLE_LOG) {
 			return;

@@ -12,6 +12,7 @@ function makeConfig(opts) {
 
     return {
         entry: entries,
+        devtool: 'source-maps',
         output: {
             path: path.join(__dirname, 'build'),
             filename: library + '.' + libraryTarget + '.js',

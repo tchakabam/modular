@@ -4,6 +4,7 @@ import Graph from '../ui/Graph';
 
 const patches = [];
 const nodules = new Map();
+const links = []
 
 let defaultAudioContext = null;
 let defaultAudioSourceNode = null;
@@ -93,14 +94,19 @@ class Context {
 		return defaultAudioSourceNode;
 	}
 
-	static registerPatch(from, to, knobName) {
+	static checkForPatch(from, to, knobName = null) {
+		console.log('checkForPatch', from, to);
 		const patchIndex = patches.findIndex(
 			(patch) => 
 				patch.from === from 
 				&& patch.to === to
 				&& patch.knobName === knobName
 		);
-		if (patchIndex >= 0) {
+		return patchIndex >= 0;
+	}
+
+	static registerPatch(from, to, knobName = null) {
+		if (Context.checkForPatch(from, to, knobName)) {
 			throw new Error('Patch requested to register already registered!');
 		}
 		patches.push({

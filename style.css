@@ -1,17 +1,25 @@
+svg {
+  background-color: #E9F1DF;
+}
+
 .links line {
   stroke: #999;
   stroke-opacity: 0.6;
 }
 
 .nodes g circle {
-  fill: #FFE11A;
-  stroke: #EB4B3F;
+  fill: #F2385A;
+  stroke: #F5A503;
   stroke-width: 4px;
 }
 
+.nodes g {
+  cursor: pointer;
+}
+
 .nodes .node-is-destination {
-	fill: #EB263F;
-	stroke: #BEDB39;
+	fill: #36B1BF;
+	stroke: #4AD9D9;
 	stroke-width: 4px;
 }
 
@@ -28,19 +36,19 @@ button.editing {
 
 @keyframes node-selected-animation {
     0% {
-    	fill: #FFE11A;
+    	fill: #E9F1DF;
     	stroke-width: 2px;
-    	stroke: #52D1D9;
+    	stroke: #4AD9D9;
     }
     50% {
-    	fill: #EB4B3F;
+    	fill: #E9F1DF;
     	stroke-width: 4px;
-    	stroke: #1F8A70;
+    	stroke: #36B1BF;
     }
     100% {
-    	fill: #FFE11A;
+    	fill: #E9F1DF;
     	stroke-width: 2px;
-    	stroke: #52D1D9;
+    	stroke: #4AD9D9;
     }
 }
 

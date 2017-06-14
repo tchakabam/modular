@@ -29,6 +29,8 @@ class Nodule {
 
 		this._createScriptProc(0);
 
+		this.noOfPlugs_ = 0;
+
 		Context.registerNodule(this);
 	}
 
@@ -86,6 +88,10 @@ class Nodule {
 		return this.name_;
 	}
 
+	get isUnplugged() {
+		return this.noOfPlugs_ === 0;
+	}
+
 	error(message) {
 		throw new Error(this.name + ' error: ' + message);
 	}
@@ -139,12 +145,12 @@ class Nodule {
 		return 0;
 	}
 
-	createKnob(name, procFunc, bufferSize, initialValue) {
+	createKnob(name, bufferSize, initialValue) {
 		if (this.hasKnob(name)) {
 			this.error('Knob already exists: ' + name);
 			return this;
 		}
-		const newKnob = new Knob(procFunc, bufferSize, initialValue);
+		const newKnob = new Knob(bufferSize, initialValue);
 		this.knobs.set(name, newKnob);
 		this.params.push(name);
 		this._createScriptProc(this.params.length);
@@ -186,6 +192,14 @@ class Nodule {
 		return this._scriptProcNode;
 	}
 
+	decrementNoOfPlugs_() {
+		this.noOfPlugs_--;
+	}
+
+	incrementNoOfPlugs_() {
+		this.noOfPlugs_++;
+	}
+
 	/*
 	 * Connects a native AudioNode with one of this Node's knobs
 	 * Returns a reference to this Node.
@@ -200,6 +214,7 @@ class Nodule {
 				audioNode.disconnect(audioParam);
 			}
 		});
+		this.incrementNoOfPlugs_();
 		return this;
 	}
 
@@ -210,6 +225,7 @@ class Nodule {
 			this.knobUnpluggers.findIndex((ku) => ku.src === audioNode), 
 			1
 		);
+		this.decrementNoOfPlugs_();
 	}
 
 	plugInput(audioNode) {
@@ -222,6 +238,7 @@ class Nodule {
 				audioNode.disconnect(inputNode);
 			}
 		});
+		this.incrementNoOfPlugs_();
 		return this;
 	}
 
@@ -231,6 +248,7 @@ class Nodule {
 			this.inputUnpluggers.findIndex((iu) => iu.src === audioNode), 
 			1
 		);
+		this.decrementNoOfPlugs_();
 	}
 
 	/*
@@ -249,6 +267,7 @@ class Nodule {
 		this.print('');
 		this.print('debug()');
 		this.print('nodule name: ' + this.name);
+		this.isUnplugged && this.print('unplugged!');
 		this.print('knobs: ' + this.knobs.size);
 		this.knobs.forEach((knob, knobKeyName) => {
 			this.print('mapped as: ' + knobKeyName);
@@ -267,13 +286,13 @@ class Nodule {
 	}
 	*/
 	static patch(fromNodule, toNodule, knobName = null) {
+		Context.registerPatch(fromNodule, toNodule, knobName);
+
 		if (knobName) {
 			toNodule.plugKnob(fromNodule.output, knobName);
 		} else {
 			toNodule.plugInput(fromNodule.output);
 		}
-
-		Context.registerPatch(fromNodule, toNodule, knobName);
 
 		return toNodule;
 	}

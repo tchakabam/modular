@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rm -Rf build && ./node_modules/.bin/webpack",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./node_modules/.bin/webpack-dev-server"
+    "start": "./node_modules/.bin/webpack-dev-server --port 8090"
   },
   "author": "Stephan Hesse <tchakabam@gmail.com>",
   "license": "ISC",

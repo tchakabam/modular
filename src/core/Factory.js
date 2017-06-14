@@ -1,15 +1,19 @@
-import Nodule from '../core/Nodule';
+const ALLOW_DEFINE_OVERLOADS = false;
 
 const staticNodules = new Map();
+const staticMonitors = new Map();
 
 function getMapForType(type) {
 	let map;
 	switch (type) {
+	case Factory.Types.MONITOR:
+		map = staticMonitors;
+		break;
 	case Factory.Types.NODULE:
 		map = staticNodules
 		break;
 	default:
-		throw new Error('factory doesnt know type: ' + type);
+		throw new Error('Factory doesn`t know type: ' + type);
 	}
 	return map;
 }
@@ -17,7 +21,11 @@ function getMapForType(type) {
 class Factory {
 
 	static define(clazz, {name, type}) {
-		getMapForType(type).set(name, clazz);
+		let map = getMapForType(type);
+		if (!ALLOW_DEFINE_OVERLOADS && map.has(name)) {
+			throw new Error('Factory: Define overloads not allowed: ' + name);
+		}
+		map.set(name, clazz);
 		return clazz;
 	}
 
@@ -35,7 +43,7 @@ class Factory {
 		if (!map.has(name)) {
 			throw new Error('requested class doesnt exist!');
 		}
-		return staticNodules.get(name);	
+		return map.get(name);	
 	}
 
 	static createInstance({name, type, options}) {
@@ -52,16 +60,9 @@ class Factory {
 		return true;
 	}
 
-	/*
-	static declareNodule(prototypeExt, name) {
-		class N extends Nodule {
-		};
-		return N;
-	}
-	*/
-
 	static get Types() {
 		return {
+			MONITOR: 'Monitor',
 			NODULE: 'Nodule'
 		}
 	}

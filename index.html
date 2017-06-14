@@ -16,7 +16,7 @@
 		<!--<div id="ui"></div>-->
 
 		<div id='ui' style="width: 960px; height: 800px;">
-			<canvas style="width: 100%;height: 10%" class="waveform"></canvas>
+			<canvas width="128" height="200" id="canvas" class="waveform"></canvas>
 			<div style="width: 100%;height: 10%" class="menu"></div>
 			<div style="width: 960px; height: 600px; overflow: scroll;">
 				<svg width="1500" height="960" class="patchzone"></svg>
@@ -34,7 +34,7 @@
 			function start() {
 				var osc = new modular.create('Oscillator', {frequency: 200});
 				var lfo1 = new modular.create('Oscillator', {frequency: 0.5});
-				var lfo2 = new modular.create('Oscillator', {frequency: 1.0});
+				var lfo2 = new modular.create('Oscillator', {frequency: 5});
 				var gain = new modular.create('NativeGain');
 				var lfo2Gain = new modular.create('NativeGain', {gain: 20.0});
 
@@ -47,122 +47,19 @@
 
 				gain.knob('gain').value = 1.0;
 
+
+
 				modular.patchToDevice(gain, 1.0);
 
 				//modular.unpatch(osc, gain);
 				//modular.unpatch(lfo2, lfo2Gain);
 
 				modular.refreshUI();
-			}
 
+				var canvas = document.getElementById('canvas');
+				var rmsMonitor = new modular.show('RMSMeter', {knob: osc.knob('frequency'), canvasElement: canvas, frameRateFps: 50});
+			}			
 
-			function testKnob() {
-
-				var c = document.getElementById("canvas");
-				var canvasCtx = c.getContext("2d");
-
-				var audioCtx = modular.Context.getOrCreateDefaultAudioContext();
-				var analyser = audioCtx.createAnalyser();
-
-				var knob = window.knob = new modular.Knob();
-
-				
-
-				// create Oscillator node
-				var oscillator = audioCtx.createOscillator();
-
-				oscillator.type = 'square';
-				oscillator.frequency.value = 3000; // value in hertz
-				oscillator.start();
-
-				oscillator.connect(audioCtx.destination);
-
-				knob.drive(oscillator.frequency);
-
-				knob.drive(analyser);
-
-				analyser.fftSize = 2048;
-				var bufferLength = analyser.fftSize;
-				var dataArray = new Uint8Array(bufferLength);
-				analyser.getByteTimeDomainData(dataArray);
-
-				var WIDTH = 960;
-				var HEIGHT = 100;
-
-				function draw() {
-
-				      drawVisual = requestAnimationFrame(draw);
-
-				      analyser.getByteTimeDomainData(dataArray);
-
-				      canvasCtx.fillStyle = 'rgb(200, 200, 200)';
-				      canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-
-				      canvasCtx.lineWidth = 2;
-				      canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
-
-				      canvasCtx.beginPath();
-
-				      var sliceWidth = WIDTH * 1.0 / bufferLength;
-				      var x = 0;
-
-				      for(var i = 0; i < bufferLength; i++) {
-				   
-				        var v = dataArray[i] / 128.0;
-				        var y = v * HEIGHT/2;
-
-				        if(i === 0) {
-				          canvasCtx.moveTo(x, y);
-				        } else {
-				          canvasCtx.lineTo(x, y);
-				        }
-
-				        x += sliceWidth;
-				      }
-
-				      canvasCtx.lineTo(canvas.width, canvas.height/2);
-				      canvasCtx.stroke();
-				    };
-
-				    draw();
-			}
-
-			/*
-			function test() {
-				var AudioContext = window.AudioContext || window.webkitAudioContext;
-
-				var audioCtx = new AudioContext();
-
-				// create an normal oscillator to make sound
-				var oscillator = audioCtx.createOscillator();
-
-				// create a second oscillator that will be used as an LFO (Low-frequency
-				// oscillator), and will control a parameter
-				var lfo = audioCtx.createOscillator();
-
-				// set the frequency of the second oscillator to a low number
-				lfo.frequency.value = 2.0; // 2Hz: two oscillations par second
-
-				// create a gain whose gain AudioParam will be controlled by the LFO
-				var gain = audioCtx.createGain();
-
-				// connect the LFO to the gain AudioParam. This means the value of the LFO
-				// will not produce any audio, but will change the value of the gain instead
-				lfo.connect(gain.gain);
-
-				// connect the oscillator that will produce audio to the gain
-				oscillator.connect(gain);
-
-				// connect the gain to the destination so we hear sound
-				gain.connect(audioCtx.destination);
-
-				// start the oscillator that will produce audio
-				oscillator.start();
-
-				// start the oscillator that will modify the gain value
-				lfo.start();				
-			}
-			*/
 
 		</script>
 		

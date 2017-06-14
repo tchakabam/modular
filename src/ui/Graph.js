@@ -209,11 +209,21 @@ class Graph {
 	onCircleClick(e) {
 		//console.log(e);
 
+		function patchOrUnpatch(fromNodule, toNodule) {
+			if (modular.checkForPatch(fromNodule, toNodule)) {
+				modular.unpatch(fromNodule, toNodule);
+			} else {
+				modular.patch(fromNodule, toNodule);
+			}
+		}
+
 		// update internal state
 		if (this.selectedNodeId && this.editing) {
 			const fromNodule = this.getController(this.selectedNodeId).model;
 			const toNodule = this.getController(e.id).model;
-			modular.patch(fromNodule, toNodule);
+
+			patchOrUnpatch(fromNodule, toNodule);
+
 			this.refresh();
 			return;
 		}
@@ -270,9 +280,6 @@ class Graph {
 
 		// first lets clear everything
 	 	svg.html("");
-
-		// background
-		svg.style("background-color", "#38FFD0");
 
 		// defs
 		svg.append("defs").append("marker")

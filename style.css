@@ -8,8 +8,8 @@ svg {
 }
 
 .nodes g circle {
-  fill: #F2385A;
-  stroke: #F5A503;
+  fill: #4B606C;
+  stroke: #002931;
   stroke-width: 4px;
 }
 
@@ -17,9 +17,13 @@ svg {
   cursor: pointer;
 }
 
+.nodes g text {
+  stroke: #911D00;
+}
+
 .nodes .node-is-destination {
-	fill: #36B1BF;
-	stroke: #4AD9D9;
+	fill: #002931;
+	stroke: #002931;
 	stroke-width: 4px;
 }
 
@@ -38,17 +42,17 @@ button.editing {
     0% {
     	fill: #E9F1DF;
     	stroke-width: 2px;
-    	stroke: #4AD9D9;
+    	stroke: #002931;
     }
     50% {
     	fill: #E9F1DF;
     	stroke-width: 4px;
-    	stroke: #36B1BF;
+    	stroke: #4B606C;
     }
     100% {
     	fill: #E9F1DF;
     	stroke-width: 2px;
-    	stroke: #4AD9D9;
+    	stroke: #002931;
     }
 }
 

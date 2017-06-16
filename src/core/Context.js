@@ -1,10 +1,9 @@
 import Map from 'es6-map';
 
-import Graph from '../ui/Graph';
+import Graph from '../ui/graph/Graph';
 
 const patches = [];
 const nodules = new Map();
-const links = []
 
 let defaultAudioContext = null;
 let defaultAudioSourceNode = null;
@@ -150,7 +149,7 @@ class Context {
 		return Context;
 	}
 
-	static setUIElement(elementOrId) {
+	static setContainer(elementOrId) {
 		if (uiElement) {
 			throw new Error('uiElement already set');
 		}
@@ -174,11 +173,12 @@ class Context {
 		graph = new Graph(Context);
 	}
 
-	static unsetUIElement() {
+	static unmountContainer() {
 		uiElement = null;
+		// TODO: do more here
 	}
 
-	static get uiElement() {
+	static get container() {
 		return uiElement;
 	}
 
@@ -190,7 +190,7 @@ class Context {
 		return patches;
 	}
 
-	static refreshUI() {
+	static refresh() {
 		graph.refresh();
 	}
 }

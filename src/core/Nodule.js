@@ -79,6 +79,10 @@ class Nodule {
 		}
 	}
 
+	getKnobs() {
+		return this.knobs;
+	}
+
 	set name(n) {
 		throw new Error('Nodule names are currently read-only (FIXME)');
 		this.name_ = n;

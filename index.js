@@ -3,12 +3,14 @@ import Factory from './src/core/Factory';
 import Context from './src/core/Context';
 import Nodule from './src/core/Nodule';
 import Monitor from './src/core/Monitor';
+import ui from './src/ui/all';
 
 // Factory entry point
 require('./src/base/all');
 require('./src/ui/monitors/all');
 
 module.exports = {
+	ui,
 	Context,
 	Nodule,
 	Knob,
@@ -24,6 +26,6 @@ module.exports = {
 	unpatch: Nodule.unpatch,
 	patchToDevice: Context.patchToDevice,
 	checkForPatch: Context.checkForPatch,
-	refreshUI: Context.refreshUI,
-	setUIElement: Context.setUIElement
+	refresh: Context.refresh,
+	setContainer: Context.setContainer
 };

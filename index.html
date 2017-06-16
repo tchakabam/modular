@@ -17,6 +17,7 @@
 
 		<div id='ui' style="width: 960px; height: 800px;">
 			<canvas width="128" height="200" id="canvas" class="waveform"></canvas>
+			<div style="" id="panel"></div>
 			<div style="width: 100%;height: 10%" class="menu"></div>
 			<div style="width: 960px; height: 600px; overflow: scroll;">
 				<svg width="1500" height="960" class="patchzone"></svg>
@@ -27,10 +28,6 @@
 
 		start();
 
-			function createNodulesDropDownList() {
-				
-			}
-
 			function start() {
 				var osc = new modular.create('Oscillator', {frequency: 200});
 				var lfo1 = new modular.create('Oscillator', {frequency: 0.5});
@@ -38,7 +35,7 @@
 				var gain = new modular.create('NativeGain');
 				var lfo2Gain = new modular.create('NativeGain', {gain: 20.0});
 
-				modular.setUIElement('ui');
+				modular.setContainer('ui');
 
 				modular.patch(osc, gain);
 				modular.patch(lfo2, lfo2Gain);
@@ -54,10 +51,12 @@
 				//modular.unpatch(osc, gain);
 				//modular.unpatch(lfo2, lfo2Gain);
 
-				modular.refreshUI();
+				modular.refresh();
 
+				/*
 				var canvas = document.getElementById('canvas');
 				var rmsMonitor = new modular.show('RMSMeter', {knob: osc.knob('frequency'), canvasElement: canvas, frameRateFps: 50});
+				*/
 			}			
 
 

@@ -47,6 +47,7 @@ class Knob {
 		bufferSource.connect(gain);
 
 		this._gainNode = gain;
+		this._gainNode.gain.value = initialValue;
 	}
 
 	/**
@@ -83,6 +84,10 @@ class Knob {
 		}
 	}
 
+	get id() {
+		return this.id_;
+	}
+
 	get param() {
 		return this._gainNode.gain;
 	}
@@ -95,8 +100,16 @@ class Knob {
 		return this._gainNode.gain.value;
 	}
 
-	get id() {
-		return this.id_;
+	get min() {
+		return 0;
+	}
+
+	get max() {
+		return 255;
+	}
+
+	get step() {
+		return 0.1;
 	}
 
     /**

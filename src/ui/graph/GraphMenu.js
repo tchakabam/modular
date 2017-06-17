@@ -1,5 +1,7 @@
 const d3 = require('d3');
 
+import Factory from '../../core/Factory';
+
 class GraphMenu {
 	constructor(graph) {
 		this.elementId = graph.elementId;

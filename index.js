@@ -10,20 +10,20 @@ require('./src/base/all');
 require('./src/ui/monitors/all');
 
 module.exports = {
-	ui,
-	Context,
-	Nodule,
-	Knob,
-	Factory,
-	Monitor,
+	/* Factory API */
 	create: (name, options, type = Factory.Types.NODULE) => {
 		return Factory.createInstance({name, type, options});
 	},
 	show: (name, options) => {
 		return Factory.createInstance({name, type: Factory.Types.MONITOR, options});
 	},
+	Factory,
+	/* Nodule API */
 	patch: Nodule.patch,
 	unpatch: Nodule.unpatch,
+	unpatchAll: Nodule.unpatchAll,
+	/* Context API */
+	unregisterNodule: Context.unregisterNodule,
 	patchToDevice: Context.patchToDevice,
 	checkForPatch: Context.checkForPatch,
 	refresh: Context.refresh,

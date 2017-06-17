@@ -32,8 +32,10 @@ class DataGenerator {
 		controllers[DESTINATION_ID] = new DataController({
 			debug: () => {
 				console.debug(Context.getOrCreateDefaultAudioContext().destination);
-			}
-		});
+			},
+			getKnobs: () => [],
+			getParams: () => []
+		}, true);
 
 		const linkedNodes = [];
 		function insertIntoLinkedNodesOnce(name) {

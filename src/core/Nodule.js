@@ -24,14 +24,16 @@ class Nodule {
 
 		this.inputUnpluggers = [];
 		this.knobUnpluggers = [];
-
-		this.scriptProcNode = null;
-
-		this._createScriptProc(0);
-
 		this.noOfPlugs_ = 0;
 
+		this._scriptProcNode = null;
+		this._createScriptProc(0);
+
 		Context.registerNodule(this);
+	}
+
+	dispose() {
+		Context.unregisterNodule(this);
 	}
 
 	_createScriptProc(noOfParams = 0) {
@@ -80,7 +82,11 @@ class Nodule {
 	}
 
 	getKnobs() {
-		return this.knobs;
+		return Array.from(this.knobs);
+	}
+
+	getParams() {
+		return this.params.slice();
 	}
 
 	set name(n) {
@@ -94,6 +100,10 @@ class Nodule {
 
 	get isUnplugged() {
 		return this.noOfPlugs_ === 0;
+	}
+
+	get noOfPlugs() {
+		return this.noOfPlugs_;
 	}
 
 	error(message) {
@@ -236,7 +246,7 @@ class Nodule {
 		const inputNode = this.input;
 		audioNode.connect(inputNode);
 		this.inputUnpluggers.push({
-			src:audioNode,
+			src: audioNode,
 			inputNode,
 			run: () => {
 				audioNode.disconnect(inputNode);
@@ -255,12 +265,6 @@ class Nodule {
 		this.decrementNoOfPlugs_();
 	}
 
-	/*
-	drive(audioNode) {
-		this.output.connect(audioNode);
-	}
-	*/
-
 	unplugEverything() {
 		this.output.disconnect();
 		this.knobUnpluggers.forEach((ku) => ku.run());
@@ -272,9 +276,12 @@ class Nodule {
 		this.print('debug()');
 		this.print('nodule name: ' + this.name);
 		this.isUnplugged && this.print('unplugged!');
-		this.print('knobs: ' + this.knobs.size);
+		this.print('no of knobs: ' + this.knobs.size);
+		this.print('no of plugs: ' + this.noOfPlugs);
+		this.print('no of knob plugs: ' + this.knobUnpluggers.length);
+		this.print('no of input plugs: ' + this.inputUnpluggers.length);
 		this.knobs.forEach((knob, knobKeyName) => {
-			this.print('mapped as: ' + knobKeyName);
+			this.print('knob mapped as param: ' + knobKeyName);
 			knob.debug();
 		}, this);
 	}
@@ -283,12 +290,6 @@ class Nodule {
 	 * Connects a native AudioNode to this Nodule's output
 	 * and returns a reference to this Nodule.
 	 */ 
-	/*
-	connectToOutput(audioNodeOrParam) {
-		this.output.connect(audioNodeOrParam);
-		return this;
-	}
-	*/
 	static patch(fromNodule, toNodule, knobName = null) {
 		Context.registerPatch(fromNodule, toNodule, knobName);
 
@@ -302,7 +303,6 @@ class Nodule {
 	}
 
 	static unpatch(fromNodule, toNodule, knobName = null) {
-
 		Context.unregisterPatch(fromNodule, toNodule, knobName);
 
 		if (knobName) {
@@ -310,6 +310,12 @@ class Nodule {
 		} else {
 			toNodule.unplugInput(fromNodule.output);
 		}	
+	}
+
+	static unpatchAll(fromNodule_) {
+		Context.unregisterAllPatches(fromNodule_);
+
+		Nodule.prototype.unplugEverything.call(fromNodule_);
 	}
 
 	static tokenizeName(name) {

@@ -24,10 +24,12 @@ class Oscillator extends Nodule {
 	constructor({frequency} = {}) {
 		super('Oscillator');
 
-		this.createKnob('frequency').value = frequency || DEFAULT_FREQ;
+		this.createKnob('frequency')
+			.callibrate(0, 20000, 0.1)
+			.value = frequency || DEFAULT_FREQ;
 
-		//this.createKnob('oct');
 		/*
+		this.createKnob('oct');
 		this.createKnob('fm');
 		this.createKnob('phase');
 		this.createKnob('reset');
@@ -89,7 +91,6 @@ class Oscillator extends Nodule {
 			//console.debug("min freq: " + freq);
 			this.minFreq = freq;
 		}
-
 
 		return val;
 	}

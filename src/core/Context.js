@@ -129,6 +129,15 @@ class Context {
 		patches.splice(patchIndex, 1);
 	}
 
+	static unregisterAllPatches(fromAndTo) {
+		patches.slice().forEach((patch) => {
+			if (patch.from === fromAndTo 
+				|| patch.to === fromAndTo) {
+				Context.unregisterPatch(patch.from, patch.to, patch.knobName);
+			}
+		});
+	}
+
 	static registerNodule(nodule) {
 		const name = nodule.name
 		if (nodules.has(name)) {

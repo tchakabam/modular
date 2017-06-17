@@ -12,7 +12,9 @@ class NativeGain extends Identity {
 		this.gainNode = defaultAudioCtx.createGain();
 
 		// connect to param
-		this.createKnob('gain').drive(this.gainNode.gain);
+		this.createKnob('gain')
+			.callibrate(0, 1.0, 0.0001)
+			.drive(this.gainNode.gain);
 
 		this.knob('gain').value = gain || 1.0;
 	}

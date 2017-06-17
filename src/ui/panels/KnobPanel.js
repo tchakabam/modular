@@ -35,10 +35,10 @@ class KnobPanel extends Panel {
 		const {id, value, min, max, step} = this.props.data.knob;
 		return (
 			<div>
-				<label>Knob: {id}</label>
+				<p><label>Knob-Object-UID: {id}</label></p>
+				<input type="text" size="5" onChange={this.onChangeKeyboard.bind(this)} value={this.state.keyboardValue} ></input>
 				<input onChange={this.onChangeSlider.bind(this)} step={step} value={value} min={min} max={max} type="range"></input>
 				<span>{value}</span>
-				<input type="text" onChange={this.onChangeKeyboard.bind(this)} value={this.state.keyboardValue} ></input>
 			</div>
 		);
 	}

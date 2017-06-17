@@ -5,13 +5,15 @@ import DataController from './DataController';
 import GraphMenu from './GraphMenu';
 import GraphEventHandler from './GraphEventHandler';
 
+const RADIUS = 30;
+
 class Graph {
 	constructor({nodules, patches, container}) {
 
 		// make read-only hook
 		this.elementId = container.id;
 		// make r/w hook
-		this.editing =  false;	
+		this.editing_ =  false;	
 
 		this.svg_ = null;
 		this.graphData_ = null;
@@ -26,6 +28,22 @@ class Graph {
 		return this.eventHandler_;
 	}
 
+	get isEditing() {
+		return this.editing_;
+	}
+
+	get isNodeSelected() {
+		return this.selectedNodeId_ !== null;
+	}
+
+	get isDestinationSelected() {
+		return this.getController(this.selectedNodeId).isDestination;
+	}
+
+	isDestinationNodeId(id) {
+		return this.getController(id).isDestination;
+	}
+
 	set selectedNodeId(id) {
 		this.selectedNodeId_ = id;
 	}
@@ -34,11 +52,23 @@ class Graph {
 		return this.selectedNodeId_;
 	}
 
+	setEditing(v) {
+		this.editing_ = v;
+	}
+
 	getSelectMenuValue() {
 		return d3.selectAll('#select-nodule > option')
 			.nodes().filter(function(option) {
 				return option.selected;
 		})[0].value;
+	}
+
+	getSelectedNodule() {
+		return this.getController(this.selectedNodeId).getNodule();
+	}
+
+	getNoduleByNodeId(id) {
+		return this.getController(id).getNodule();
 	}
 
 	updateSelectedNodeId_(id) {
@@ -75,25 +105,27 @@ class Graph {
 		return graphData_.controllers[id];
 	}
 
-	refresh() {
-		const radius = 30;
+	refreshMenu_() {
 		const elementId = this.elementId;
-
-		this.dataGenerator_.run();
-
-		const graph = this.graphData_ = this.dataGenerator_.get();
-
-		console.log(graph);
-
-		const menu = d3.select('#' + elementId + '>.menu');
-
+		const menu = d3.select('#' + elementId + '> .menu');
 		if (menu.node().innerHTML.length === 0) {
 			this.menu_.refresh();
 		}
+	}
 
-		const svg = this.svg_ = d3.select("#" + elementId + '>div>svg'),
-		    width = + svg.attr("width"),
-		    height = + svg.attr("height");
+	refresh() {
+
+		this.refreshMenu_();
+
+		this.dataGenerator_.run();
+
+		const radius = RADIUS;
+		const elementId = this.elementId;
+		const graph = this.graphData_ = this.dataGenerator_.get();
+
+		const svg = this.svg_ = d3.select("#" + elementId + '>div>svg');
+		const width = + svg.attr("width");
+		const height = + svg.attr("height");
 
 		// first lets clear everything
 	 	svg.html("");
@@ -155,7 +187,7 @@ class Graph {
 		    .data(graph.nodes)
 		    .enter().append("g")
 		    	.attr("class", "nodule")
-		    	.on("click", this.eventHandler.onCircleClick.bind(this.eventHandler))
+		    	.on("click", this.eventHandler.onNodeClick.bind(this.eventHandler))
 		    	.attr('nodule-name', function(d) { return d.id; })
 		    	.attr("width", 2 * radius)
 		    	.attr("height", 2 * radius);

@@ -46,6 +46,9 @@ class Knob {
 		//bufferSource.noGC();
 		bufferSource.connect(gain);
 
+		this.min_ = 0;
+		this.max_ = 255;
+		this.step_ = 1;
 		this._gainNode = gain;
 		this._gainNode.gain.value = initialValue;
 	}
@@ -74,6 +77,7 @@ class Knob {
 		} else {
 			return this._gainNode.connect(audioNode, 0, input);
 		}
+		return this;
 	}
 
 	free(audioNode, input = 0) {
@@ -82,6 +86,14 @@ class Knob {
 		} else {
 			this._gainNode.disconnect(audioNode, 0, input);
 		}
+		return this;
+	}
+
+	callibrate(min, max, step) {
+		this.min_ = min;
+		this.max_ = max;
+		this.step_ = step;
+		return this;
 	}
 
 	get id() {
@@ -101,15 +113,15 @@ class Knob {
 	}
 
 	get min() {
-		return 0;
+		return this.min_;
 	}
 
 	get max() {
-		return 255;
+		return this.max_;
 	}
 
 	get step() {
-		return 0.1;
+		return this.step_;
 	}
 
     /**

@@ -1,6 +1,7 @@
 import Map from 'es6-map';
 
 import Knob from './Knob';
+import Units from './Units';
 import Context from './Context';
 
 import SometimesDoer from '../util/SometimesDoer';
@@ -10,6 +11,11 @@ const ENABLE_LOG = true;
 const defaultAudioCtx = Context.getOrCreateDefaultAudioContext();
 
 class Nodule {
+
+	static get Units() {
+		return Units;
+	}
+
 	constructor(name = null, bufferSize = 0) {
 
 		this.name_ = Nodule.tokenizeName(name);

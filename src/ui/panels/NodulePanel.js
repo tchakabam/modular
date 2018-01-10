@@ -41,7 +41,7 @@ class NodulePanel extends Panel {
 				    <li key={el[0]} className="param">
 				    	<div>
 					    	<p>
-					    		<label>Parameter: {params[i]}</label>
+					    		<label>Knob: {params[i]}</label>
 					    		<span>&nbsp;</span>
 					    		<button style={{backgroundColor: (this.state.selectedKnob === el[1]) ? 'red' : 'blue'}} onClick={this.onClickTargetButton.bind(this, {knob: el[1], name: el[0]})}>(target)</button>
 					    	</p>

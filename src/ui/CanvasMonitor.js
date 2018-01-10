@@ -13,7 +13,7 @@ class CanvasMonitor extends Monitor {
 		}	
 	}
 
-	draw() {
+	draw(canvasContext) {
 		throw new Error('CanvasMonitor: draw() must be implemented');
 	}
 }

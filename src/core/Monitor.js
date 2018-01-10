@@ -4,7 +4,7 @@ const defaultAudioCtx = Context.getOrCreateDefaultAudioContext();
 
 /**
  * @class
- * @prop knob {Knob} - the knob we monitor
+ * @prop knobOrAudioNode {Knob|AudioNode} - the Knob or AudioNode we monitor
  * monitors a Knob using an AnalyserNode
  *
  */
@@ -13,13 +13,13 @@ class Monitor {
 	 * @constructs
 	 * @param {Knob} knob - the knob to monitor
 	 */
-	constructor(knob, canvasContext, windowSize = 8192, frameRateFps = 25) {
+	constructor(knobOrAudioNode, canvasContext, windowSize = 8192, frameRateFps = 25) {
 
-		if (!knob || !canvasContext) {
-			throw new Error('Monitor needs knob and canvasContext');
+		if (!knobOrAudioNode || !canvasContext) {
+			throw new Error('Monitor needs knobOrAudioNode and canvasContext');
 		}
 
-		this._knob = knob;
+		this._knob = knobOrAudioNode;
 		this._canvasCtx = canvasContext;
 		this._windowSize = windowSize;
 		this._frameRateFps = frameRateFps;
@@ -116,7 +116,15 @@ class Monitor {
 		}
 
 		this.analyser.fftSize = this.windowSize;
-		this.knob.drive(this.analyser);
+		if (typeof this.knob.drive === 'function') {
+			this.knob.drive(this.analyser);
+		} else if(typeof this.knob.connect === 'function') {
+			// its an AudioNode
+			this.knob.connect(this.analyser);
+		} else {
+			throw new Error('Monitor not connected to Knob or AudioNode (no such methods)');
+		}
+		
 	}
 
 	click() {}

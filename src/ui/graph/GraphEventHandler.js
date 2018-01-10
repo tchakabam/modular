@@ -7,14 +7,20 @@ const PANEL_SELECTOR = "div.panel";
 function patchOrUnpatch(fromNodule, toNodule, knobName) {
 
 	if (this.graph.isDestinationSelected) {
-		modular.patchToDevice(fromNodule);
+
+		if (!modular.checkForPatch(fromNodule, null)) {
+			modular.patchToDevice(fromNodule);
+		} else {
+			console.warn('Device patches can not be unpatched (yet) !');
+		}
+
 		return;
 	}
 
-	if (modular.checkForPatch(fromNodule, toNodule)) {
-		modular.unpatch(fromNodule, toNodule, knobName);
-	} else {
+	if (!modular.checkForPatch(fromNodule, toNodule)) {
 		modular.patch(fromNodule, toNodule, knobName);
+	} else {
+		modular.unpatch(fromNodule, toNodule, knobName);
 	}
 }
 
@@ -74,6 +80,8 @@ class GraphEventHandler {
 			const knobName = this.panelState.selectedKnobName;
 
 			patchOrUnpatch.call(this, fromNodule, toNodule, knobName);
+
+			this.graph.setEditing(false)
 
 			this.graph.refresh();
 		} else {

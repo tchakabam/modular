@@ -2,6 +2,11 @@ svg {
   background-color: #E9F1DF;
 }
 
+input.slider {
+  position: relative;
+  top: 0.5em;
+}
+
 .links line {
   stroke: #999;
   stroke-opacity: 0.6;

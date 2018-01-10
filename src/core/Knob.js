@@ -1,5 +1,6 @@
 import Context from './Context';
 import SometimesDoer from '../util/SometimesDoer';
+import Units from './Units';
 
 const ENABLE_LOG = true;
 const LOG_PROBABILITY = 0.01;
@@ -19,6 +20,11 @@ const defaultAudioCtx = Context.getOrCreateDefaultAudioContext();
  * Thus we generate a control signal based on an a-rate param.
  */
 class Knob {
+
+	static get() {
+		return Units;
+	}
+
 	/**
 	 * @constructs
 	 * @param {number} bufferSize - size of buffer connected to the GainNode
@@ -49,6 +55,8 @@ class Knob {
 		this.min_ = 0;
 		this.max_ = 255;
 		this.step_ = 1;
+		this.unit_ = Units.NONE;
+		this.onvaluesethandler_ = null;
 		this._gainNode = gain;
 		this._gainNode.gain.value = initialValue;
 	}
@@ -81,6 +89,7 @@ class Knob {
 	}
 
 	free(audioNode, input = 0) {
+		this.onvaluesethandler_ = null;
 		if (input === 0) {
 			this._gainNode.disconnect(audioNode);
 		} else {
@@ -89,10 +98,16 @@ class Knob {
 		return this;
 	}
 
-	callibrate(min, max, step) {
+	default(val) {
+		this.value = val;
+		return this;
+	}
+
+	callibrate(min, max, step, unit) {
 		this.min_ = min;
 		this.max_ = max;
 		this.step_ = step;
+		this.unit_ = unit;
 		return this;
 	}
 
@@ -105,7 +120,15 @@ class Knob {
 	}
 
 	set value(v) {
+		if (typeof v !== 'number') {
+			return;
+		}
 		this._gainNode.gain.value = v;
+		this.onvaluesethandler_ && this.onvaluesethandler_(v);
+	}
+
+	set onvalueset(handler) {
+		this.onvaluesethandler_ = handler;
 	}
 
 	get value() {
@@ -122,6 +145,10 @@ class Knob {
 
 	get step() {
 		return this.step_;
+	}
+
+	get unit() {
+		return this.unit_;
 	}
 
     /**

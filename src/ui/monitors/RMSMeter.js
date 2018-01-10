@@ -22,8 +22,7 @@ class RMSMeter extends CanvasMonitor {
 		this.min = +Infinity;		
 	}
 
-	draw() {
-		const canvasCtx = this.canvasElement.getContext('2d');
+	draw(canvasCtx) {
 		const rms = this.rms;
 
 		if (rms < this.min) {

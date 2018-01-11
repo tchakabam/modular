@@ -16,8 +16,8 @@ function makeConfig(opts) {
         output: {
             path: path.join(__dirname, 'build'),
             filename: library + '.' + libraryTarget + '.js',
-            library: library,
-            libraryTarget: libraryTarget
+            library,
+            libraryTarget
         },
         module: {
             loaders: [

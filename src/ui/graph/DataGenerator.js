@@ -42,7 +42,7 @@ class DataGenerator {
 			if (linkedNodes.indexOf(name) >= 0) { 
 				linkedNodes.push(name); 
 			}
-		};
+		}
 
 		const unlinkedNodes = [];
 		this.nodules.forEach((nodule) => { 

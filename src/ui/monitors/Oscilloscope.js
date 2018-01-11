@@ -13,12 +13,12 @@ class Oscilloscope extends CanvasMonitor {
 		this.label = label || '<unlabeled>';
 
 		const options = this.options_ = {
-		  stroke: 3,		// size of the wave 
-		  glow: 0.1,		// glowing effect 
-		  buffer: 1024  // buffer size ranging from 32 to 2048 
+		  stroke: 3,		// size of the wave
+		  glow: 0.1,		// glowing effect
+		  buffer: 1024  // buffer size ranging from 32 to 2048
 		};
-		 
-		// attach oscilloscope 
+
+		// attach oscilloscope
 		this.scope_ = new Osc(canvasElement, options);
 		this.scope_.addSignal(this.analyser, '#00ffff');
 	}

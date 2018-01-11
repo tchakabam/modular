@@ -5,7 +5,7 @@ import CanvasMonitor from '../CanvasMonitor';
 class RMSMeter extends CanvasMonitor {
 	constructor({canvasElement, knob, label}) {
 		super(canvasElement, knob);
-	
+
 		this.label = label || '<unlabeled>';
 
 		this.recalInterval_ = setInterval(() => {
@@ -19,7 +19,7 @@ class RMSMeter extends CanvasMonitor {
 
 	autoCalibrate() {
 		this.max = -Infinity;
-		this.min = +Infinity;		
+		this.min = +Infinity;
 	}
 
 	draw(canvasCtx) {
